@@ -27,9 +27,9 @@ float sdfCircle(vec2 p, float r) {
     return length(p) - r;
 }
 
-mat3 rotateX(float radians) {
-  float s = sin(radians);
-  float c = cos(radians);
+mat3 rotateX(float angle) {
+  float s = sin(angle);
+  float c = cos(angle);
 
   return mat3(
     1.0, 0.0, 0.0,
@@ -38,9 +38,9 @@ mat3 rotateX(float radians) {
   );
 }
 
-mat3 rotateY(float radians) {
-  float s = sin(radians);
-  float c = cos(radians);
+mat3 rotateY(float angle) {
+  float s = sin(angle);
+  float c = cos(angle);
 
   return mat3(
     c, 0.0, s,
@@ -49,15 +49,25 @@ mat3 rotateY(float radians) {
   );
 }
 
-mat3 rotateZ(float radians) {
-  float s = sin(radians);
-  float c = cos(radians);
+mat3 rotateZ(float angle) {
+  float s = sin(angle);
+  float c = cos(angle);
 
   return mat3(
     c, -s, 0.0,
     s, c, 0.0,
     0.0, 0.0, 1.0
   );
+}
+
+mat2 rot2D(float angle) {
+  float s = sin(angle);
+  float c = cos(angle);
+  return mat2(c, -s, s, c);
+}
+
+float plot(vec2 st, float pct) {
+  return smoothstep( pct-0.02, pct, st.y) - smoothstep( pct, pct+0.02, st.y);
 }
 
 // The MIT License
