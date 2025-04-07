@@ -56,7 +56,7 @@ float map(vec3 p) {
   float sphere = sdSphere(p - spherePos, 0.25);
 
   vec3 translate = vec3(sin(uTime), cos(uTime), 0.) * 0.1;
-  vec3 q = mod(p, 1.) - 0.5;
+  vec3 q = mod(p, 1.) - 0.5; // Infinite Scale
   // q.xz *= rot2D(uTime);
   // q.yx *= rot2D(uTime);
   q += translate;
@@ -82,7 +82,7 @@ void main() {
 
   // Orbit Controls
   // Vertical Rotation
-  // ro.yz *= rot2D(mouse.y + 0.8);
+  // ro.yz *= rot2D(mouse.y + 0.8); // Prevent lower bounds from going beneath the ground
   // rd.yz *= rot2D(mouse.y + 0.8);
 
   // Horizontal Rotation
