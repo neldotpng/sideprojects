@@ -5,10 +5,7 @@ uniform vec2 uMouse;
 varying vec2 vUv;
 
 void main() {
-  vec2 uv = vUv;
-  vec3 color = vec3(0.);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
 
-  color = vec3(uv, 0.);
-
-  gl_FragColor = vec4(color, 1.);
+  vUv = uv;
 }

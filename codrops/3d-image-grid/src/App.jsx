@@ -1,12 +1,14 @@
 import { Canvas } from "@react-three/fiber";
 import Debug from "./components/Debug";
 import FullscreenShaderPlane from "./components/FullscreenShaderPlane";
-import ImageCard from "./components/ImageCard";
+import Grid from "./components/Grid";
 
 const App = () => {
   return (
     <main id="canvas-container">
-      <Canvas>
+      <Canvas
+        orthographic
+        camera={{ near: 0.1, far: 1000, position: [0, 0, 10] }}>
         <Debug />
 
         <ambientLight intensity={0.1} />
@@ -15,7 +17,7 @@ const App = () => {
           position={[0, 0, 5]}
         />
         {/* <FullscreenShaderPlane /> */}
-        <ImageCard />
+        <Grid />
       </Canvas>
     </main>
   );
