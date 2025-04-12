@@ -1,6 +1,5 @@
 import { Canvas } from "@react-three/fiber";
 import Debug from "./components/Debug";
-import FullscreenShaderPlane from "./components/FullscreenShaderPlane";
 import Grid from "./components/Grid";
 
 const App = () => {
@@ -11,16 +10,11 @@ const App = () => {
         camera={{ near: 0.1, far: 1000, position: [0, 0, 10] }}>
         <Debug />
 
-        <ambientLight intensity={0.1} />
-        <directionalLight
-          color="red"
-          position={[0, 0, 5]}
-        />
         <Grid
           imageSize={20}
           margins={50}
           imageScale={4}
-          hoverRadius={10}
+          hoverRadius={8}
         />
       </Canvas>
     </main>
