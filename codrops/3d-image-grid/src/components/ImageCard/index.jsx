@@ -126,7 +126,7 @@ const ImageCard = ({ imageSize = 25, margins = 25, imageScale = 2, colRows, hove
         ref={instancedMesh}
         // using count prop caused bugs, switched to default args
         args={[null, null, col * row]}>
-        <planeGeometry args={[1, 1, 2, 2]}>
+        <planeGeometry args={[1, 1]}>
           <instancedBufferAttribute
             attach="attributes-index"
             args={[texIndex, 1]}
