@@ -9,6 +9,8 @@ varying vec2 vUv;
 varying float vIndex;
 varying float vDist;
 
+// TODO: Scale Mesh linearly. Each plane should scale equally based on distance.
+
 void main() {
   vec4 mvPosition = instanceMatrix * vec4(position, 1.);
   vec4 worldPosition = projectionMatrix * modelViewMatrix * mvPosition;

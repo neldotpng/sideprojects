@@ -63,7 +63,7 @@ const ImageCard = ({ imageSize = 25, margins = 25, imageScale = 2, colRows, hove
     textures.then((data) => {
       customShaderMaterial.current.uniforms.uTexArray.value = data;
     });
-  }, [textures, size]);
+  }, [textures, size, margins, imageScale, hoverRadius]);
 
   useLayoutEffect(() => {
     // Calculate offset for positioning in Orthographic clip space

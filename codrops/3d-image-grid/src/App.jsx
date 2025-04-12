@@ -1,8 +1,16 @@
 import { Canvas } from "@react-three/fiber";
 import Debug from "./components/Debug";
 import Grid from "./components/Grid";
+import { useControls } from "leva";
 
 const App = () => {
+  const { imageSize, margins, imageScale, hoverRadius } = useControls({
+    imageSize: 20,
+    margins: 50,
+    imageScale: 4,
+    hoverRadius: 8,
+  });
+
   return (
     <main id="canvas-container">
       <Canvas
@@ -11,10 +19,10 @@ const App = () => {
         <Debug />
 
         <Grid
-          imageSize={20}
-          margins={50}
-          imageScale={4}
-          hoverRadius={8}
+          imageSize={imageSize}
+          margins={margins}
+          imageScale={imageScale}
+          hoverRadius={hoverRadius}
         />
       </Canvas>
     </main>
