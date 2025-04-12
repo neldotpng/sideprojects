@@ -2,29 +2,16 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
+import { createThreeDataArrayTexture } from "./functions";
+
 import CustomShaderMaterial from "../../global/materials/CustomShaderMaterial";
 import vertexShader from "./shaders/vertexShader.glsl?raw";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";
-import { useTexture } from "@react-three/drei";
 
 // Dummy Object3D to set instance positions and update matrices
 const dummy = new THREE.Object3D();
 
-const ImageCard = ({ imageSize = 25, colRows, margins = 25 }) => {
-  // Textures Loader
-  const texturesArray = useTexture([
-    "./textures/img1.webp",
-    "./textures/img2.webp",
-    "./textures/img3.webp",
-    "./textures/img4.webp",
-    "./textures/img5.webp",
-    "./textures/img6.webp",
-    "./textures/img7.webp",
-    "./textures/img8.webp",
-    "./textures/img9.webp",
-    "./textures/img10.webp",
-  ]);
-
+const ImageCard = ({ imageSize = 25, margins = 25, imageScale = 2, colRows, hoverRadius = 1 }) => {
   // Mouse Position state for uniform
   const [mPos] = useState(new THREE.Vector2());
   // Used for Mouse Pointer event to normalize values
@@ -40,12 +27,43 @@ const ImageCard = ({ imageSize = 25, colRows, margins = 25 }) => {
   // Calculate total space taken up by images
   const totalSize = imageSize + margins;
 
-  // Generate Textures Attribute
+  const texturesArray = useMemo(() => {
+    return [
+      "./textures/img1.webp",
+      "./textures/img2.webp",
+      "./textures/img3.webp",
+      "./textures/img4.webp",
+      "./textures/img5.webp",
+      "./textures/img6.webp",
+      "./textures/img7.webp",
+      "./textures/img8.webp",
+      "./textures/img9.webp",
+      "./textures/img10.webp",
+    ];
+  }, []);
+
+  // Generate sampler2DArray
   const textures = useMemo(() => {
-    return new Float32Array([...Array(col * row)], () => {
-      return texturesArray[Math.floor(Math.random() * texturesArray.length)];
+    return createThreeDataArrayTexture(texturesArray, 333, 333);
+  }, [texturesArray]);
+
+  // Generate textureArray index attribute
+  const texIndex = useMemo(
+    () =>
+      new Float32Array(
+        Array.from({ length: col * row }, () => {
+          return Math.floor(Math.random() * texturesArray.length);
+        })
+      ),
+    [col, row, texturesArray]
+  );
+
+  useEffect(() => {
+    // Set sampler2DArray Uniform
+    textures.then((data) => {
+      customShaderMaterial.current.uniforms.uTexArray.value = data;
     });
-  }, [col, row, texturesArray]);
+  }, [textures, size]);
 
   useLayoutEffect(() => {
     // Calculate offset for positioning in Orthographic clip space
@@ -70,27 +88,27 @@ const ImageCard = ({ imageSize = 25, colRows, margins = 25 }) => {
   // Update Aspect Ratio Uniform
   useEffect(() => {
     customShaderMaterial.current.uniforms.uAspect = size.width / size.height;
-  }, [size]);
 
-  const onPointerMove = (e) => {
-    const { clientX, clientY } = e;
+    const onPointerMove = (e) => {
+      const { clientX, clientY } = e;
 
-    // Normalized x and y values for orthographic clip space
-    // Range [-1, 1] on standard x and y axes
-    const x = (clientX - 0.5 * size.width) / (size.width / 2);
-    const y = -(clientY - 0.5 * size.height) / (size.height / 2);
+      // Normalized x and y values for orthographic clip space
+      // Range [-1, 1] on standard x and y axes
+      const x = (clientX - 0.5 * size.width) / (size.width / 2);
+      const y = -(clientY - 0.5 * size.height) / (size.height / 2);
 
-    mPos.set(x, y);
-  };
+      mPos.set(x, y);
+    };
 
-  useEffect(() => {
+    // Remove Listener if Remounted
+    window.removeEventListener("pointermove", (e) => onPointerMove(e));
+
     // Add window listener
     window.addEventListener("pointermove", (e) => onPointerMove(e));
 
     // Remove listener on unmount
     return window.removeEventListener("pointermove", (e) => onPointerMove(e));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [size, mPos]);
 
   // Lerp mouse position vector for slight delay
   const lerpMousePosition = (delta) => {
@@ -108,7 +126,12 @@ const ImageCard = ({ imageSize = 25, colRows, margins = 25 }) => {
         ref={instancedMesh}
         // using count prop caused bugs, switched to default args
         args={[null, null, col * row]}>
-        <planeGeometry args={[1, 1, 2, 2]} />
+        <planeGeometry args={[1, 1, 2, 2]}>
+          <instancedBufferAttribute
+            attach="attributes-index"
+            args={[texIndex, 1]}
+          />
+        </planeGeometry>
         <CustomShaderMaterial
           ref={customShaderMaterial}
           vertexShader={vertexShader}
@@ -116,6 +139,9 @@ const ImageCard = ({ imageSize = 25, colRows, margins = 25 }) => {
           side={THREE.DoubleSide}
           uniforms={{
             uAspect: size.width / size.height,
+            uTexArray: null,
+            uScale: imageScale,
+            uRadius: hoverRadius,
           }}
         />
       </instancedMesh>

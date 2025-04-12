@@ -16,8 +16,12 @@ const App = () => {
           color="red"
           position={[0, 0, 5]}
         />
-        {/* <FullscreenShaderPlane /> */}
-        <Grid />
+        <Grid
+          imageSize={20}
+          margins={50}
+          imageScale={4}
+          hoverRadius={10}
+        />
       </Canvas>
     </main>
   );
