@@ -3,24 +3,27 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 const useFFTTexture = (fileUrl, fftSize = 1024) => {
-  const [init, setInit] = useState(false);
   const [textureData, setTextureData] = useState();
+  const [sampleRate, setSampleRate] = useState(0);
+  const [playing, setPlaying] = useState(false);
 
   const audioRef = useRef();
   const analyzerRef = useRef();
-  const listenerRef = useRef(new THREE.AudioListener());
 
   useEffect(() => {
-    if (!init) return;
+    if (!playing) return;
+
+    const listener = new THREE.AudioListener();
+    setSampleRate(listener.context.sampleRate);
 
     const loader = new THREE.AudioLoader();
+    const audio = new THREE.Audio(listener);
+
     loader.load(fileUrl, (buffer) => {
       audio.setBuffer(buffer);
       audio.setLoop(true);
       audio.play();
     });
-
-    const audio = new THREE.Audio(listenerRef.current);
 
     const analyzer = new THREE.AudioAnalyser(audio, fftSize);
     analyzerRef.current = analyzer;
@@ -29,11 +32,7 @@ const useFFTTexture = (fileUrl, fftSize = 1024) => {
     setTextureData(
       new THREE.DataTexture(analyzerRef.current.data, fftSize / 2, 1, THREE.RedFormat)
     );
-  }, [init, fileUrl, fftSize]);
-
-  const startAudio = () => {
-    if (!init) setInit(true);
-  };
+  }, [fileUrl, fftSize, playing]);
 
   useFrame(() => {
     if (!analyzerRef.current) return;
@@ -42,7 +41,11 @@ const useFFTTexture = (fileUrl, fftSize = 1024) => {
     textureData.needsUpdate = true;
   });
 
-  return [textureData, startAudio];
+  const setAudioPlaying = () => {
+    setPlaying(true);
+  };
+
+  return [textureData, sampleRate, setAudioPlaying];
 };
 
 export default useFFTTexture;

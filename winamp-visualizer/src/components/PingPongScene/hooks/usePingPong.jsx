@@ -2,7 +2,7 @@ import { useEffect, useRef, useMemo, useLayoutEffect } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-const usePingPong = (vertexShader = "", fragmentShader = "") => {
+const usePingPong = (vertexShader = "", fragmentShader = "", uniforms = {}) => {
   const { gl, size } = useThree();
   const bufferScene = useMemo(() => new THREE.Scene(), []);
   const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), []);
@@ -41,12 +41,12 @@ const usePingPong = (vertexShader = "", fragmentShader = "") => {
         uniforms: {
           uTime: { value: 0 },
           uTexture: { value: null },
-          uTextureB: { value: null },
+          ...uniforms,
         },
         vertexShader,
         fragmentShader,
       }),
-    [vertexShader, fragmentShader]
+    [vertexShader, fragmentShader, uniforms]
   );
 
   // Create Texture
@@ -54,16 +54,19 @@ const usePingPong = (vertexShader = "", fragmentShader = "") => {
     return buffer.current ? renderTargetB.texture : renderTargetA.texture;
   }, [renderTargetA, renderTargetB]);
 
-  // Create the bufferMesh
-  const bufferMesh = useMemo(() => {
-    const plane = new THREE.PlaneGeometry(2, 2);
-    return new THREE.Mesh(plane, bufferMaterial);
-  }, [bufferMaterial]);
-
+  // Create bufferMesh and add to scene
+  // Remove and dispose when material updates
   useEffect(() => {
+    const plane = new THREE.PlaneGeometry(2, 2, 2, 2);
+    const bufferMesh = new THREE.Mesh(plane, bufferMaterial);
+
     bufferScene.add(bufferMesh);
-    return () => bufferScene.remove(bufferMesh);
-  }, [bufferScene, bufferMesh]);
+    return () => {
+      bufferScene.remove(bufferMesh);
+      bufferMesh.geometry.dispose();
+      bufferMesh.material.dispose();
+    };
+  }, [bufferScene, bufferMaterial]);
 
   useFrame((state, delta) => {
     // Update Uniforms
