@@ -7,7 +7,7 @@ varying vec2 vUv;
 
 void main() {
   vec2 uv = vUv;
-  // uv = fract(uv * 2.);
+  uv = fract(uv * 2.);
   float time = uTime * 0.5;
   vec3 color = vec3(0.);
 

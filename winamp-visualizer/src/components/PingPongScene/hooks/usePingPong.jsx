@@ -2,10 +2,10 @@ import { useEffect, useRef, useMemo, useLayoutEffect } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-const usePingPong = (vertexShader = "", fragmentShader = "", uniforms = {}) => {
+const usePingPong = ({ segments = 50, vertexShader = "", fragmentShader = "", uniforms = {} }) => {
   const { gl, size } = useThree();
   const bufferScene = useMemo(() => new THREE.Scene(), []);
-  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), []);
+  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10), []);
   const buffer = useRef(true);
 
   // Settings for WebGL Renderer
@@ -57,7 +57,7 @@ const usePingPong = (vertexShader = "", fragmentShader = "", uniforms = {}) => {
   // Create bufferMesh and add to scene
   // Remove and dispose when material updates
   useEffect(() => {
-    const plane = new THREE.PlaneGeometry(2, 2, 2, 2);
+    const plane = new THREE.PlaneGeometry(2, 2, segments, segments);
     const bufferMesh = new THREE.Mesh(plane, bufferMaterial);
 
     bufferScene.add(bufferMesh);

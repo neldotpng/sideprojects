@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { useThree, useFrame } from "@react-three/fiber";
-import * as THREE from "three";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useThree, useFrame, extend } from "@react-three/fiber";
+import { shaderMaterial } from "@react-three/drei";
 
 import bufferVertexShader from "./shaders/pingpong/vertexShader.glsl?raw";
 import bufferFragmentShader from "./shaders/pingpong/fragmentShader.glsl?raw";
@@ -21,7 +21,19 @@ function getFrequencyAverage(data, start, end) {
   return sum / len / 255;
 }
 
-const PingPongScene = ({ segments = 2 }) => {
+const uniforms = {
+  uTime: 0,
+  uTexture: null,
+  uBass: 0,
+  uMids: 0,
+  uHighs: 0,
+};
+
+const CustomShaderMaterial = shaderMaterial(uniforms, vertexShader, fragmentShader);
+
+extend({ CustomShaderMaterial });
+
+const PingPongScene = ({ segments = 50 }) => {
   const songs = [
     "/audio/00.mp3",
     "/audio/01.mp3",
@@ -39,21 +51,21 @@ const PingPongScene = ({ segments = 2 }) => {
   const plane = useRef();
   const shaderMaterial = useRef();
 
-  const bufferUniforms = {
-    uFFTTexture: { value: null },
-  };
-  const uniforms = {
-    uTexture: { value: null },
-    uBass: { value: 0 },
-    uMids: { value: 0 },
-    uHighs: { value: 0 },
-  };
-  const fftSize = 1024;
-  const [texture, bufferMaterial] = usePingPong(
-    bufferVertexShader,
-    bufferFragmentShader,
-    bufferUniforms
-  );
+  const bufferUniforms = useMemo(() => {
+    return {
+      uFFTTexture: { value: null },
+    };
+  }, []);
+
+  const fftSize = useMemo(() => {
+    return 1024;
+  }, []);
+
+  const [texture, bufferMaterial] = usePingPong({
+    vertexShader: bufferVertexShader,
+    fragmentShader: bufferFragmentShader,
+    uniforms: bufferUniforms,
+  });
   const [dataTexture, sampleRate, setAudioPlay] = useFFTTexture(song, fftSize);
   const [binInfo, setBinInfo] = useState({
     bassRange: [0, 0],
@@ -82,28 +94,31 @@ const PingPongScene = ({ segments = 2 }) => {
       midsRange,
       highsRange,
     });
-  }, [sampleRate]);
+  }, [sampleRate, fftSize]);
 
-  useFrame(() => {
+  useFrame((state, delta) => {
     if (dataTexture && texture) {
       bufferMaterial.uniforms.uFFTTexture.value = dataTexture;
 
-      // shaderMaterial.current.uniforms.uTexture.value = texture;
-      // shaderMaterial.current.uniforms.uBass.value = getFrequencyAverage(
-      //   dataTexture.image.data,
-      //   binInfo.bassRange[0],
-      //   binInfo.bassRange[1]
-      // );
-      // shaderMaterial.current.uniforms.uMids.value = getFrequencyAverage(
-      //   dataTexture.image.data,
-      //   binInfo.midsRange[0],
-      //   binInfo.midsRange[1]
-      // );
-      // shaderMaterial.current.uniforms.uHighs.value = getFrequencyAverage(
-      //   dataTexture.image.data,
-      //   binInfo.highsRange[0],
-      //   binInfo.highsRange[1]
-      // );
+      shaderMaterial.current.uniforms.uTime.value += delta;
+      shaderMaterial.current.uniforms.uTexture.value = texture;
+      // console.log(shaderMaterial.current.uniforms.uTime.value);
+
+      shaderMaterial.current.uniforms.uBass.value = getFrequencyAverage(
+        dataTexture.image.data,
+        binInfo.bassRange[0],
+        binInfo.bassRange[1]
+      );
+      shaderMaterial.current.uniforms.uMids.value = getFrequencyAverage(
+        dataTexture.image.data,
+        binInfo.midsRange[0],
+        binInfo.midsRange[1]
+      );
+      shaderMaterial.current.uniforms.uHighs.value = getFrequencyAverage(
+        dataTexture.image.data,
+        binInfo.highsRange[0],
+        binInfo.highsRange[1]
+      );
     }
   });
 
@@ -112,14 +127,10 @@ const PingPongScene = ({ segments = 2 }) => {
       ref={plane}
       onClick={onClick}>
       <planeGeometry args={[1, 1, segments, segments]} />
-      {/* <shaderMaterial
+      <customShaderMaterial
         ref={shaderMaterial}
-        uniforms={uniforms}
-        side={THREE.DoubleSide}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-      /> */}
-      <meshBasicMaterial map={texture} />
+        key={CustomShaderMaterial.key}
+      />
     </mesh>
   );
 };
