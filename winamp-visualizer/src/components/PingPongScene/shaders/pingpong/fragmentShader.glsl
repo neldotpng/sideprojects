@@ -60,55 +60,85 @@ mat2 rot2D(float angle) {
 
 void main() {
   vec2 uv = vUv / vec2(1., uAspect);
+  vec3 color = vec3(0.);
   uv = uv * 2. - 1.;
+
   float pn = sign(uv.y);
   pn *= sign(uv.x);
-  uv = fract(uv * 4.);
+  uv = fract(uv * 3.);
 
   float time = uTime * 0.5;
-  vec3 color = vec3(0.);
 
-  vec2 _uv = uv * 1.25 - .6125;
-  // _uv *= rot2D(uTime * 0.1 * PI2);
+  vec2 _uv = uv - .5;
   vec2 rotSign = step(0., _uv);
   rotSign = rotSign * 2. - 1.;
 
   float pnx = sign(rotSign.x);
   float pny = sign(rotSign.y);
 
-  // _uv *= rot2D(uTime * 120. * PI2);
-
   vec4 prev = texture2D(uTexture, vec2(vUv.x + (pnx * 0.001), vUv.y + (pny * 0.001)));
-  float f = texture2D(uFFTTexture, _uv).r * step(0., _uv.x);
-  f += texture2D(uFFTTexture, -_uv).r * step(_uv.x, 0.);
-  // n = noise(uv* 50. * f);
+  float f = texture2D(uFFTTexture, _uv.yx).r * step(0., _uv.y);
+  f += texture2D(uFFTTexture, -_uv.yx).r * step(_uv.y, 0.);
+
+  // uv *= rot2D(uTime);
 
   float dist = length(abs(uv) - 0.5) - uTime * 0.3;
-  // dist = length(abs(uv) - 0.5);
   dist += pow(uEnergy, 0.5) * f * 0.0125;
-  
-  // dist += pow(f, 0.25) * 0.25;
+  // dist += pow(uEnergy, 0.5) * f * 0.25;
   dist = fract(dist * uBass * 3.);
-
-  // dist += pow(f, 0.5) * 0.0125;
   dist *= pow(f, 0.8);
-  // dist = smoothstep(0., 1., dist);
-  // f *= dist;
-
-  // float s = step( uv.y, f ) * step( f - 0.125, uv.y );
 
   // Audio-reactive color
   color = mix(
     prev.rgb, 
-    vec3(dist + 0.4 * abs(sin(time * 1.13)), dist + 0.3 * abs(cos(time * 1.23)), dist + 0.5 * abs(sin(time * 1.33))), 
-    // vec3(dist),
-    0.2
+    vec3(
+      dist + 0.4 * abs(sin(time * 4.13)), 
+      dist + 0.2 * abs(cos(time * 2.43)), 
+      dist + 0.6 * abs(sin(time * 6.69))
+    ), 
+    0.15 * f 
   );
   color *= 0.99; // fade
 
-  // color *= vec3((vUv * 2. - 1.), 1.);
-  // color = vec3(uv, 1.);
-  // color = vec3(test, 0.);
 
-  gl_FragColor = vec4(color, 1.);
+
+
+  // vec4 prev = texture2D(uTexture, vUv + 0.001);
+  // float fft = texture2D(uFFTTexture, vec2(0.01, 0.)).r;
+  // vec2 p = uv * 10.0 + sin(fft * 10.0);
+  // float d = sin(p.x + p.y + uTime);
+  
+  // color = vec3(noise(p));
+
+  // // Audio-reactive color
+  // color = mix(
+  //   prev.rgb, 
+  //   vec3(noise(p)), 
+  //   d * 0.05
+  // );
+  // color *= 0.99; // fade
+
+
+
+
+  // vec2 uv = (vUv - 0.5) / vec2(1.0, uAspect);
+
+  // float radius = length(uv);
+  // float angle = atan(uv.y, uv.x);
+
+  // // Sample from FFT texture
+  // float fft = texture2D(uFFTTexture, vec2(radius, 0.0)).r;
+
+  // // Modulate tunnel depth and twist with FFT
+  // float tunnel = fract(1.0 / (radius + 0.3) + uTime * 0.25);
+  // float color = sin(tunnel * 100.0 + angle * 10.0);
+
+  // // Rotate over time
+  // angle += uTime * 0.2;
+  // angle += sin(uTime + fft * 5.0) * 2.0;
+  
+  // // Final output
+  // gl_FragColor = vec4(vec3(color * fft), 1.0);
+
+  gl_FragColor = vec4(vec3(color), 1.);
 }
