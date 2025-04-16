@@ -2,7 +2,7 @@ import { useEffect, useRef, useMemo, useLayoutEffect } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-const usePingPong = ({ segments = 50, vertexShader = "", fragmentShader = "", uniforms = {} }) => {
+const usePingPong = ({ segments = 2, vertexShader = "", fragmentShader = "", uniforms = {} }) => {
   const { gl, size } = useThree();
   const bufferScene = useMemo(() => new THREE.Scene(), []);
   const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10), []);
@@ -66,7 +66,7 @@ const usePingPong = ({ segments = 50, vertexShader = "", fragmentShader = "", un
       bufferMesh.geometry.dispose();
       bufferMesh.material.dispose();
     };
-  }, [bufferScene, bufferMaterial]);
+  }, [bufferScene, bufferMaterial, segments]);
 
   useFrame((state, delta) => {
     // Update Uniforms

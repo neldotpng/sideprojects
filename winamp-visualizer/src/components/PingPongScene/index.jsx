@@ -23,10 +23,13 @@ function getFrequencyAverage(data, start, end) {
 
 const uniforms = {
   uTime: 0,
+  uAspect: 0,
   uTexture: null,
+  uFFTTexture: null,
   uBass: 0,
   uMids: 0,
   uHighs: 0,
+  uEnergy: 0,
 };
 
 const CustomShaderMaterial = shaderMaterial(uniforms, vertexShader, fragmentShader);
@@ -44,8 +47,13 @@ const PingPongScene = ({ segments = 50 }) => {
     "/audio/06.mp3",
     "/audio/07.mp3",
     "/audio/08.mp3",
+    "/audio/09.mp3",
+    "/audio/10.mp3",
+    "/audio/11.mp3",
+    "/audio/12.mp3",
   ];
   const [song] = useState(songs[Math.floor(Math.random() * songs.length)]);
+  // const [song] = useState(songs[1]);
 
   const { viewport } = useThree();
   const plane = useRef();
@@ -54,6 +62,11 @@ const PingPongScene = ({ segments = 50 }) => {
   const bufferUniforms = useMemo(() => {
     return {
       uFFTTexture: { value: null },
+      uBass: { value: 0 },
+      uMids: { value: 0 },
+      uHighs: { value: 0 },
+      uEnergy: { value: 0 },
+      uAspect: { value: 0 },
     };
   }, []);
 
@@ -77,7 +90,8 @@ const PingPongScene = ({ segments = 50 }) => {
   useEffect(() => {
     plane.current.scale.x = viewport.width;
     plane.current.scale.y = viewport.height;
-  }, [viewport]);
+    bufferMaterial.uniforms.uAspect.value = viewport.width / viewport.height;
+  }, [viewport, bufferMaterial]);
 
   const onClick = () => {
     setAudioPlay();
@@ -102,23 +116,36 @@ const PingPongScene = ({ segments = 50 }) => {
 
       shaderMaterial.current.uniforms.uTime.value += delta;
       shaderMaterial.current.uniforms.uTexture.value = texture;
-      // console.log(shaderMaterial.current.uniforms.uTime.value);
 
-      shaderMaterial.current.uniforms.uBass.value = getFrequencyAverage(
+      const bass = getFrequencyAverage(
         dataTexture.image.data,
         binInfo.bassRange[0],
         binInfo.bassRange[1]
       );
-      shaderMaterial.current.uniforms.uMids.value = getFrequencyAverage(
+      const mids = getFrequencyAverage(
         dataTexture.image.data,
         binInfo.midsRange[0],
         binInfo.midsRange[1]
       );
-      shaderMaterial.current.uniforms.uHighs.value = getFrequencyAverage(
+      const highs = getFrequencyAverage(
         dataTexture.image.data,
         binInfo.highsRange[0],
         binInfo.highsRange[1]
       );
+      const energy = getFrequencyAverage(
+        dataTexture.image.data,
+        binInfo.bassRange[0],
+        binInfo.highsRange[1]
+      );
+
+      shaderMaterial.current.uniforms.uBass.value = bass;
+      shaderMaterial.current.uniforms.uMids.value = mids;
+      shaderMaterial.current.uniforms.uHighs.value = highs;
+      shaderMaterial.current.uniforms.uEnergy.value = energy;
+      bufferMaterial.uniforms.uBass.value = bass;
+      bufferMaterial.uniforms.uMids.value = mids;
+      bufferMaterial.uniforms.uHighs.value = highs;
+      bufferMaterial.uniforms.uEnergy.value = energy;
     }
   });
 
