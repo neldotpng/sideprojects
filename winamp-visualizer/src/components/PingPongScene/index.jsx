@@ -36,7 +36,7 @@ const CustomShaderMaterial = shaderMaterial(uniforms, vertexShader, fragmentShad
 
 extend({ CustomShaderMaterial });
 
-const PingPongScene = ({ segments = 50 }) => {
+const PingPongScene = ({ segments = 2 }) => {
   const songs = [
     "/audio/00.mp3",
     "/audio/01.mp3",
@@ -52,9 +52,12 @@ const PingPongScene = ({ segments = 50 }) => {
     "/audio/11.mp3",
     "/audio/12.mp3",
     "/audio/13.mp3",
+    "/audio/14.mp3",
+    "/audio/15.mp3",
+    "/audio/16.mp3",
   ];
-  const [song] = useState(songs[Math.floor(Math.random() * songs.length)]);
-  // const [song] = useState(songs[7]);
+  // const [song] = useState(songs[Math.floor(Math.random() * songs.length)]);
+  const [song] = useState(songs[0]);
 
   const { viewport } = useThree();
   const plane = useRef();

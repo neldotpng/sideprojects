@@ -39,7 +39,7 @@ void main() {
   vec3 colpx = palette(
     // 1. - sin(uTime),
     // _uv.x,
-    1. - sin((sin(_uv.y) + cos(_uv.x) ) * uEnergy),
+    sin((sin(_uv.y) + cos(_uv.x) ) * uEnergy * 1.5),
     // -sin(_uv.y * _uv.x * (uEnergy - uBass) * 3.),
     // pow(_uv.y * _uv.x, 2.5) * uEnergy,
     // dot(uv.xy, uv.yx),
@@ -49,12 +49,13 @@ void main() {
     vec3(0.3, 0.2, 0.2)
   );
   vec3 colpy = palette(
-    -sin(_uv.y * _uv.x * uEnergy),
+    _uv.y,
+    // -sin(_uv.y * _uv.x * uEnergy),
     // sin(uTime * uv.y) / 2. + 0.5,
-    vec3(0.5, 0.5, 0.5),
-    vec3(0.5, 0.5, 0.5),
-    vec3(1.0, 1.0, 1.0),
-    vec3(0.3, 0.2, 0.2)
+    vec3(0.5,0.5,0.5),
+    vec3(0.5,0.5,0.5),
+    vec3(1.0,0.7,0.4),
+    vec3(0.0,0.15,0.20)
   );
 
   float e = remap(uEnergy, 0., 1., .5, 1.); 
@@ -62,7 +63,7 @@ void main() {
   float m = remap(uMids, 0., 1., 0., 0.05); 
   float h = remap(uHighs, 0., 1., 0., 0.05); 
 
-  color *= e * (colpx * 1.5);
+  // color *= e * (colpx * 1.5);
   // color += b;
   // color += m;
   // color += h;
