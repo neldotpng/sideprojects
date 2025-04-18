@@ -15,7 +15,7 @@ void main() {
   // You can animate this too
   // pos.y += sin(uTime + pos.x * 10.0) * 0.1;
   vec3 pos = position;
-  pos.z += length(f) * 2.;
+  // pos.z += length(f) * 2.;
   // pos.z = smoothstep(0., 1., f.x * 0.1);
   // pos.z += (sin((uTime * 0.1) * 2.) / 2. + 0.5) * 2.;
 

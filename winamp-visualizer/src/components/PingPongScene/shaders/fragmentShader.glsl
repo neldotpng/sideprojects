@@ -38,8 +38,8 @@ void main() {
 
   vec3 colpx = palette(
     // 1. - sin(uTime),
-    // _uv.x,
-    sin((sin(_uv.y) + cos(_uv.x) ) * uEnergy * 1.5),
+    pow(_uv.x, 2.),
+    // sin((sin(_uv.y) + cos(_uv.x) ) * uEnergy * 1.5),
     // -sin(_uv.y * _uv.x * (uEnergy - uBass) * 3.),
     // pow(_uv.y * _uv.x, 2.5) * uEnergy,
     // dot(uv.xy, uv.yx),
@@ -49,7 +49,7 @@ void main() {
     vec3(0.3, 0.2, 0.2)
   );
   vec3 colpy = palette(
-    _uv.y,
+    pow(_uv.y, 2.),
     // -sin(_uv.y * _uv.x * uEnergy),
     // sin(uTime * uv.y) / 2. + 0.5,
     vec3(0.5,0.5,0.5),
@@ -58,15 +58,15 @@ void main() {
     vec3(0.0,0.15,0.20)
   );
 
-  float e = remap(uEnergy, 0., 1., .5, 1.); 
+  float e = remap(uEnergy, 0., 1., .9, 1.); 
   float b = remap(uBass, 0., 1., 0., 0.05); 
   float m = remap(uMids, 0., 1., 0., 0.05); 
   float h = remap(uHighs, 0., 1., 0., 0.05); 
 
-  // color *= e * (colpx * 1.5);
-  // color += b;
-  // color += m;
-  // color += h;
+  // color *= e;
+  color += b;
+  color += m;
+  color += h;
   // color *= e;
 
   gl_FragColor = vec4(color, 1.);

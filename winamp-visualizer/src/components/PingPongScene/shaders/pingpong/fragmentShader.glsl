@@ -111,6 +111,73 @@ float remap(float v, float inMin, float inMax, float outMin, float outMax) {
   return mix(outMin, outMax, t);
 }
 
+
+// RAYMARCHING
+// circular
+float smin( float a, float b, float k )
+{
+    k *= 1.0/(1.0-sqrt(0.5));
+    float h = max( k-abs(a-b), 0.0 )/k;
+    return min(a,b) - k*0.5*(1.0+h-sqrt(1.0-h*(h-2.0)));
+}
+
+float sdBox( vec3 p, vec3 b ) {
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
+float sdSphere( vec3 p, float s ) {
+  return length(p)-s;
+}
+
+vec3 opLimitedRepetition( in vec3 p, in float s, in vec3 lmin, in vec3 lmax ){
+  vec3 q = p - s*clamp(round(p/s),-lmin,lmax);
+  return q;
+}
+
+float roundh( float x ) {
+  return round(x*10.)/10.;
+}
+
+float map(vec3 p, float n) {
+  vec3 sp = vec3(0., 0., 5.);
+  sp = p - sp;
+
+  mat2 spr = rot2D(uTime * 0.3);
+  sp.xz *= spr;
+  sp.yz *= spr;
+
+  float b = roundh(uBass*2.);
+  float e = roundh(uEnergy*3.);
+
+  vec3 r = opLimitedRepetition(
+    sp, 
+    3., 
+    // vec3(0.),
+    // vec3(0.)
+    vec3(b, b, e), 
+    vec3(b, b, e)
+  );
+
+  float s1 = sdSphere(sp, 2. * n);
+  float s2 = sdSphere(r, 1. * n);
+
+  return smin(s1, s2, n);
+}
+
+float shadow( in vec3 ro, in vec3 rd, float mint, float maxt, float n ) {
+  float t = mint;
+  for( int i=0; i<256 && t<maxt; i++ )
+  {
+    float h = map(ro + rd*t, n);
+    if( h<0.001 )
+      return 0.0;
+    t += h;
+  }
+  return 1.0;
+}
+
+
 void main() {
   /* 
    * ORIGINAL VISUALIZER
@@ -292,72 +359,151 @@ void main() {
    * **** START ****
    */
 
-  vec3 color = vec3(0.);
-  vec2 uv = vUv * 2. - 1.;
-  uv.y *= 1. / uAspect;
-  vec2 z = uv * 5.;
-  float time = uTime * .1;
-  float e = remap(uEnergy, 0., 1., .5, 1.); 
-  float b = remap(uBass, 0., 1., .5, 1.);
-  float n = max(b, e);
-  float re = remap(uEnergy, 0., 1., -1., 1.);
+  // vec3 color = vec3(0.);
+  // vec2 uv = vUv * 2. - 1.;
+  // uv.y *= 1. / uAspect;
+  // vec2 z = uv * 5.;
+  // float time = uTime * .1;
+  // float e = remap(uEnergy, 0., 1., .5, 1.); 
+  // float b = remap(uBass, 0., 1., .5, 1.);
+  // float n = max(b, e);
+  // float re = remap(uEnergy, 0., 1., -1., 1.);
 
-  vec4 prev = texture2D(uTexture, vec2(vUv.x + (cos(uTime) * 0.0025), vUv.y + (sin(uTime) * 0.0025)));
+  // vec4 prev = texture2D(uTexture, vec2(vUv.x + (cos(uTime) * 0.0025), vUv.y + (sin(uTime) * 0.0025)));
 
 
-  vec2 polyA, polyB;
-  vec2 x0 = vec2(0.0);
-  float count = 6.;
+  // vec2 polyA, polyB;
+  // vec2 x0 = vec2(0.0);
+  // float count = 6.;
 
-  for (float i=1.; i<count; i++) {
-      vec2 df = vec2(-1.) + i/count;
-      vec2 v = vec2(
-        cos(n*10.*random(i)) - sin(time*i) * PI, 
-        sin(n*10.*random(i)) - cos(time*i) * PI);
-      vec2 pa = (v - df)*sign(re);
-      vec2 pb = (v + df)*sign(re);
+  // for (float i=1.; i<count; i++) {
+  //     vec2 df = vec2(-1.) + i/count;
+  //     vec2 v = vec2(
+  //       cos(n*10.*random(i)) - sin(time*i) * PI, 
+  //       sin(n*10.*random(i)) - cos(time*i) * PI);
+  //     vec2 pa = (v - df)*sign(re);
+  //     vec2 pb = (v + df)*sign(re);
     
-      polyA += cmul(
-        vec2(dot(pa.xy, pa.xy) * pa.y, sqrt(abs(pa.x)) * pa.y) * uEnergy, 
-        cpow(z, i)
-      );
-      polyB += cmul(
-        vec2(sqrt(abs(pb.y)) * pb.x + dot(pb.yy, pb.xx) * pb.x,
-          sqrt(abs(pb.x)) * pb.y + dot(pb.xy, pb.yx) * pb.y) * uEnergy, 
-        cpow(z, i)
-      );
-  }
+  //     polyA += cmul(
+  //       vec2(dot(pa.xy, pa.xy) * pa.y, sqrt(abs(pa.x)) * pa.y) * uEnergy, 
+  //       cpow(z, i)
+  //     );
+  //     polyB += cmul(
+  //       vec2(sqrt(abs(pb.y)) * pb.x + dot(pb.yy, pb.xx) * pb.x,
+  //         sqrt(abs(pb.x)) * pb.y + dot(pb.xy, pb.yx) * pb.y) * uEnergy, 
+  //       cpow(z, i)
+  //     );
+  // }
 
-  z = cdiv(polyA, polyB);
-  vec2 col = clog(z);
-  col = abs(col);
-  z = col/(PI);
+  // z = cdiv(polyA, polyB);
+  // vec2 col = clog(z);
+  // col = abs(col);
+  // z = col/(PI);
 
-  float zz = distance(uv*0.5, z);
-  zz = smoothstep(0., e, zz);
-  zz += re * uHighs;
-  zz *= uEnergy;
+  // float zz = distance(uv*0.5, z);
+  // zz = smoothstep(0., e, zz);
+  // zz += re * uHighs;
+  // zz *= uEnergy;
 
-  // Audio-reactive color
-  color = mix(
-    prev.rgb, 
-    palette( 
-      zz,
-      // vec3(.5,.5,.5),
-      // vec3(.5,.5,.5),
-      // vec3(1.5,1.5,1.5),
-      // vec3(0.825,0.937,0.995)),
-      vec3(.8,.5,.5),
-      vec3(.4,.3,.1),
-      vec3(1.,1.,1.),
-      vec3(0.335,0.180,0.084)),
-    0.25 - (e * 0.25)
-  );
-  color *= 0.99; // fade
+  // // Audio-reactive color
+  // color = mix(
+  //   prev.rgb, 
+  //   palette( 
+  //     zz,
+  //     // vec3(.5,.5,.5),
+  //     // vec3(.5,.5,.5),
+  //     // vec3(1.5,1.5,1.5),
+  //     // vec3(0.825,0.937,0.995)),
+  //     vec3(.8,.5,.5),
+  //     vec3(.4,.3,.1),
+  //     vec3(1.,1.,1.),
+  //     vec3(0.335,0.180,0.084)),
+  //   0.25 - (e * 0.25)
+  // );
+  // color *= 0.99; // fade
 
   /* 
    * **** END ****
    * MELTY VISUALIZER
+   */
+
+
+
+
+
+
+   /* 
+   * SPIRALING SDF
+   * **** START ****
+   */
+  vec3 color = vec3(0.);
+  vec2 uv = vUv - 0.5;
+  uv.y *= 1. / uAspect;
+  vec2 z = uv;
+  float time = uTime * 0.2;
+
+  // Spiral Center Points
+  vec2 d1 = (1. - cos(time * 1.5)) * vec2(sin(time * 2.5), cos(time * 2.5));
+  vec2 d2 = vec2(2.*sin(time * 3.), sin(time*2.));
+
+  z*= 10.;
+  z = cinv(z) * (2. + uEnergy);
+  z = clog(z+d1) - clog(z+d2);
+  z *= 3.;
+  z /= PI;
+
+  z = abs(fract(z) - 0.5) * 2.;
+  z = smoothstep(0., 1., z);
+
+  vec4 prev = texture2D(uTexture, vUv);
+  float e = remap(uEnergy, 0., 1., .2, 1.); 
+
+  // Initialize Raymarching Values
+  vec3 ro = vec3(0., 0., -5.);
+  vec3 rd = normalize(vec3(z, 1.));
+  float dt = 0.;
+
+  float count = 30.;
+
+  // Raymarch
+  for (float i = 0.; i < count; i++) {
+    vec3 p = ro + rd * dt; // Calculate (p)oint on (r)ay
+    float d = map(p, e); // Run SDF on the calculated (p)oint
+
+    dt += d; // Add returned SDF value to (d)istance(t)raveled
+
+    if (d < .001 || dt > 100.) break; // Stop if SDF returns small value or dt exceeds a far distance
+  }
+  
+  dt *= 0.05;
+  dt = min(dt, 1.);
+
+  float w = step(0.999, dt);
+  vec3 pal = palette( 
+    sin(time*1.212730)* uv.y + cos(time*2.1980312) * uv.x, 
+      vec3(.5,.5,.5),
+      vec3(.5,.5,.5),
+      vec3(.5,0.,.3),
+      vec3(0.73,0.,0.1));
+  vec3 mask = 1. - pal / 3. * w;
+  color = mask;
+  
+  float b = smoothstep(0.0, 0.95, dt);
+  b = remap(b, 0., 0.7, 0.0, 1.);
+  b = min(b, 1.);
+  dt = b;
+
+  color = mix(
+    prev.rgb, 
+    palette( dt, vec3(0.5,0.5,0.5),vec3(0.5,0.5,0.5),vec3(1.0,1.0,1.0),vec3(0.3,0.20,0.20)),
+    0.3 - 0.2*e
+  );
+  color *= mask;
+  color *= 0.99; // fade
+
+  /* 
+   * **** END ****
+   * SPIRALING CIRCLES VISUALIZER
    */
 
   gl_FragColor = vec4(color, 1.);

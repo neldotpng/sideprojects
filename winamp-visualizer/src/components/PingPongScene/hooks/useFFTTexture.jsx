@@ -16,14 +16,21 @@ const useFFTTexture = (fileUrl, fftSize = 1024) => {
     const listener = new THREE.AudioListener();
     setSampleRate(listener.context.sampleRate);
 
-    const loader = new THREE.AudioLoader();
     const audio = new THREE.Audio(listener);
 
-    loader.load(fileUrl, (buffer) => {
-      audio.setBuffer(buffer);
-      audio.setLoop(true);
-      audio.play();
-    });
+    if (/(iPad|iPhone|iPod)/g.test(navigator.userAgent)) {
+      const loader = new THREE.AudioLoader();
+      loader.load(fileUrl, (buffer) => {
+        audio.setBuffer(buffer);
+        audio.setLoop(true);
+        audio.play();
+      });
+    } else {
+      const mediaElement = new Audio(fileUrl);
+      mediaElement.play();
+
+      audio.setMediaElementSource(mediaElement);
+    }
 
     const analyzer = new THREE.AudioAnalyser(audio, fftSize);
     analyzerRef.current = analyzer;

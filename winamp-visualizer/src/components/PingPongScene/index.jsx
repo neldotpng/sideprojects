@@ -57,7 +57,7 @@ const PingPongScene = ({ segments = 2 }) => {
     "/audio/16.mp3",
   ];
   // const [song] = useState(songs[Math.floor(Math.random() * songs.length)]);
-  const [song] = useState(songs[0]);
+  const [song] = useState(songs[15]);
 
   const { viewport } = useThree();
   const plane = useRef();
