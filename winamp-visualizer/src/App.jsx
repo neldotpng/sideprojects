@@ -6,7 +6,7 @@ const App = () => {
   return (
     <main id="canvas-container">
       <Canvas>
-        {/* <Debug /> */}
+        <Debug />
 
         <ambientLight intensity={0.1} />
         <directionalLight

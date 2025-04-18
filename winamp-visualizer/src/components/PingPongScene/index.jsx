@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useThree, useFrame, extend } from "@react-three/fiber";
 import { shaderMaterial } from "@react-three/drei";
+import * as THREE from "three";
 
+import bufferFunctions from "./shaders/includes/functions.glsl?raw";
 import bufferVertexShader from "./shaders/pingpong/vertexShader.glsl?raw";
 import bufferFragmentShader from "./shaders/pingpong/fragmentShader.glsl?raw";
 import vertexShader from "./shaders/vertexShader.glsl?raw";
@@ -9,7 +11,9 @@ import fragmentShader from "./shaders/fragmentShader.glsl?raw";
 
 import usePingPong from "./hooks/usePingPong";
 import useFFTTexture from "./hooks/useFFTTexture";
+import useShaderControls from "./hooks/useShaderControls";
 
+// Calculate average strength of fq in range [start, end]
 function getFrequencyAverage(data, start, end) {
   let sum = 0;
   const len = end - start;
@@ -21,6 +25,7 @@ function getFrequencyAverage(data, start, end) {
   return sum / len / 255;
 }
 
+// Uniforms for customShaderMaterial
 const uniforms = {
   uTime: 0,
   uAspect: 0,
@@ -30,64 +35,82 @@ const uniforms = {
   uMids: 0,
   uHighs: 0,
   uEnergy: 0,
+  uPreset: 0,
+  uPCGC1: new THREE.Vector3(),
+  uPCGC2: new THREE.Vector3(),
+  uPCGC3: new THREE.Vector3(),
+  uPCGC4: new THREE.Vector3(),
 };
 
+// Initiate Drei shaderMaterial
 const CustomShaderMaterial = shaderMaterial(uniforms, vertexShader, fragmentShader);
-
 extend({ CustomShaderMaterial });
 
 const PingPongScene = ({ segments = 2 }) => {
-  const songs = [
-    "/audio/00.mp3",
-    "/audio/01.mp3",
-    "/audio/02.mp3",
-    "/audio/03.mp3",
-    "/audio/04.mp3",
-    "/audio/05.mp3",
-    "/audio/06.mp3",
-    "/audio/07.mp3",
-    "/audio/08.mp3",
-    "/audio/09.mp3",
-    "/audio/10.mp3",
-    "/audio/11.mp3",
-    "/audio/12.mp3",
-    "/audio/13.mp3",
-    "/audio/14.mp3",
-    "/audio/15.mp3",
-    "/audio/16.mp3",
-  ];
-  // const [song] = useState(songs[Math.floor(Math.random() * songs.length)]);
-  const [song] = useState(songs[15]);
-
+  // Used for resizing the plane to fullscreen aspect ratio
   const { viewport } = useThree();
+
   const plane = useRef();
   const shaderMaterial = useRef();
 
+  // Uniforms for the PingPong bufferMaterial
   const bufferUniforms = useMemo(() => {
     return {
       uFFTTexture: { value: null },
+      uAspect: { value: 0 },
       uBass: { value: 0 },
       uMids: { value: 0 },
       uHighs: { value: 0 },
       uEnergy: { value: 0 },
-      uAspect: { value: 0 },
+      uPreset: { value: 0 },
+      uTimeStrength: { value: 0.1 },
+      uFadeStrength: { value: 0.1 },
+      uTrailStrength: { value: 0.1 },
+      uRSGC1: { value: new THREE.Vector3() },
+      uRSGC2: { value: new THREE.Vector3() },
+      uRSGC3: { value: new THREE.Vector3() },
+      uRSGC4: { value: new THREE.Vector3() },
+      uRSGC5: { value: new THREE.Vector3() },
+      uRSGC6: { value: new THREE.Vector3() },
+      uRSGC7: { value: new THREE.Vector3() },
+      uRSGC8: { value: new THREE.Vector3() },
+      uSCGC1: { value: new THREE.Vector3() },
+      uSCGC2: { value: new THREE.Vector3() },
+      uSCGC3: { value: new THREE.Vector3() },
+      uSCGC4: { value: new THREE.Vector3() },
+      uMGC1: { value: new THREE.Vector3() },
+      uMGC2: { value: new THREE.Vector3() },
+      uMGC3: { value: new THREE.Vector3() },
+      uMGC4: { value: new THREE.Vector3() },
     };
   }, []);
 
-  const fftSize = useMemo(() => {
-    return 1024;
-  }, []);
+  // Values higher than 1024 are not working...
+  const fftSize = useMemo(() => 1024, []);
 
+  // Initiate PingPong Hook
   const [texture, bufferMaterial] = usePingPong({
     vertexShader: bufferVertexShader,
-    fragmentShader: bufferFragmentShader,
+    // Concat functions.glsl and bufferFragmentShader.glsl
+    fragmentShader: `${bufferFunctions} ${bufferFragmentShader}`,
     uniforms: bufferUniforms,
   });
-  const [dataTexture, sampleRate, setAudioPlay] = useFFTTexture(song, fftSize);
+
+  // Initiate FFTTexture Analysis Hook
+  const [dataTexture, sampleRate, setAudioPlay] = useFFTTexture(fftSize);
+
+  // Stateful bass/mids/highs sampling range for averaging and passing uniforms
   const [binInfo, setBinInfo] = useState({
     bassRange: [0, 0],
     midsRange: [0, 0],
     highsRange: [0, 0],
+  });
+
+  // Shader Controls
+  useShaderControls({
+    getMaterials: () => {
+      return { shaderMaterial: shaderMaterial.current, bufferMaterial: bufferMaterial };
+    },
   });
 
   // Scale Plane to Fullscreen
@@ -97,15 +120,17 @@ const PingPongScene = ({ segments = 2 }) => {
     bufferMaterial.uniforms.uAspect.value = viewport.width / viewport.height;
   }, [viewport, bufferMaterial]);
 
+  // User must interact to start playing audio
   const onClick = () => {
     setAudioPlay();
   };
 
+  // Update the binInfo based on sampleRate and fftSize
   useEffect(() => {
     const binWidth = sampleRate / fftSize;
-    const bassRange = [Math.floor(20 / binWidth), Math.floor(250 / binWidth)];
     const midsRange = [Math.floor(250 / binWidth), Math.floor(2000 / binWidth)];
-    const highsRange = [Math.floor(2000 / binWidth), Math.floor(20000 / binWidth)];
+    const bassRange = [Math.floor(20 / binWidth), midsRange[0]];
+    const highsRange = [midsRange[1], Math.floor(20000 / binWidth)];
 
     setBinInfo({
       bassRange,
@@ -116,11 +141,7 @@ const PingPongScene = ({ segments = 2 }) => {
 
   useFrame((state, delta) => {
     if (dataTexture && texture) {
-      bufferMaterial.uniforms.uFFTTexture.value = dataTexture;
-
-      shaderMaterial.current.uniforms.uTime.value += delta;
-      shaderMaterial.current.uniforms.uTexture.value = texture;
-
+      // Calculate average frequency for fftTextures in bass/mid/high ranges
       const bass = getFrequencyAverage(
         dataTexture.image.data,
         binInfo.bassRange[0],
@@ -142,14 +163,20 @@ const PingPongScene = ({ segments = 2 }) => {
         binInfo.highsRange[1]
       );
 
-      shaderMaterial.current.uniforms.uBass.value = bass;
-      shaderMaterial.current.uniforms.uMids.value = mids;
-      shaderMaterial.current.uniforms.uHighs.value = highs;
-      shaderMaterial.current.uniforms.uEnergy.value = energy;
+      // Uniform updates for bufferMaterial
+      bufferMaterial.uniforms.uFFTTexture.value = dataTexture;
       bufferMaterial.uniforms.uBass.value = bass;
       bufferMaterial.uniforms.uMids.value = mids;
       bufferMaterial.uniforms.uHighs.value = highs;
       bufferMaterial.uniforms.uEnergy.value = energy;
+
+      // Uniforms for customShaderMaterial
+      shaderMaterial.current.uniforms.uTime.value += delta;
+      shaderMaterial.current.uniforms.uTexture.value = texture;
+      shaderMaterial.current.uniforms.uBass.value = bass;
+      shaderMaterial.current.uniforms.uMids.value = mids;
+      shaderMaterial.current.uniforms.uHighs.value = highs;
+      shaderMaterial.current.uniforms.uEnergy.value = energy;
     }
   });
 
