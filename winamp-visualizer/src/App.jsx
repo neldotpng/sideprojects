@@ -4,6 +4,11 @@ import Debug from "./components/Debug";
 import PingPongScene from "./components/PingPongScene";
 import { Leva } from "leva";
 
+// TODO:
+// 1. Allow addition of more songs by moving the file input modal and minimizing to the corner instead of hiding
+// 2. Add overlay with the playlist and songs, maybe add controls for changing the song from there
+// 3. Loading indicator? Styling in general needs to be bumped up. Looks ugly.
+
 const App = () => {
   const [files, setFiles] = useState([]);
   const [hideLeva, setHideLeva] = useState(true);
@@ -50,7 +55,7 @@ const App = () => {
         onDrop={onDrop}
         onDragOver={onDragOver}
         style={{ display: hideLeva ? "flex" : "none" }}>
-        <div>Drag and Drop Files</div>
+        <div>Drag and drop an audio file</div>
         <div>
           <label
             className="fileSelectButton"
