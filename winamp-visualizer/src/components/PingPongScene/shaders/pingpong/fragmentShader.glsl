@@ -8,9 +8,9 @@ uniform float uMids;
 uniform float uHighs;
 uniform float uEnergy;
 uniform float uAspect;
-uniform float uPreset;
 
 /* LEVA UNIFORMS */
+uniform float uPreset;
 uniform vec3 uRSGC1;
 uniform vec3 uRSGC2;
 uniform vec3 uRSGC3;
@@ -48,7 +48,7 @@ void main() {
   vec3 mask = vec3(1.); // Multiplied by final color to apply mask if necessary
   float mixStrength = uFadeStrength;
 
-  vec3 debugcol = vec3(0.);
+  // vec3 debugcol = vec3(0.);
 
 
   /* 

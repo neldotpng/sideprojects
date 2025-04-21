@@ -149,6 +149,7 @@ const useFFTTexture = (files, fftSize = 1024) => {
     if (songs[songIndex]) {
       // Revoke last song URL, prevents doubles when audio is restarted
       URL.revokeObjectURL(prevSong.current);
+
       // Create new song URL
       const url = URL.createObjectURL(songs[songIndex]);
 

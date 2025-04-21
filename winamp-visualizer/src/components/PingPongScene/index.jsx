@@ -135,7 +135,7 @@ const PingPongScene = ({ files = [], segments = 2 }) => {
   }, [sampleRate, fftSize]);
 
   useFrame((state, delta) => {
-    if (dataTexture && texture) {
+    if (dataTexture) {
       // Calculate average frequency for fftTextures in bass/mid/high ranges
       const bass = getFrequencyAverage(
         dataTexture.image.data,
@@ -167,11 +167,14 @@ const PingPongScene = ({ files = [], segments = 2 }) => {
 
       // Uniforms for customShaderMaterial
       shaderMaterial.current.uniforms.uTime.value += delta;
-      shaderMaterial.current.uniforms.uTexture.value = texture;
       shaderMaterial.current.uniforms.uBass.value = bass;
       shaderMaterial.current.uniforms.uMids.value = mids;
       shaderMaterial.current.uniforms.uHighs.value = highs;
       shaderMaterial.current.uniforms.uEnergy.value = energy;
+    }
+
+    if (texture) {
+      shaderMaterial.current.uniforms.uTexture.value = texture;
     }
   });
 
