@@ -39,16 +39,16 @@ void main() {
   vec2 uv = vUv - 0.5;
   uv.y /= uAspect;
 
-  vec3 prev = texture2D(uTexture, vUv - uTrailStrength).rgb; // Last renders' values
+  vec3 prev = texture2D(uTexture, vUv).rgb; // Last renders' values
 
   float time = uTime * uTimeStrength;
   float energy = remap(uEnergy, 0., 1., .2, 1.);
   float bass = remap(uBass, 0., 1., .5, 1.);
 
   vec3 mask = vec3(1.); // Multiplied by final color to apply mask if necessary
-  float mixStrength = uFadeStrength - (uFadeStrength-0.1)*energy;
+  float mixStrength = uFadeStrength;
 
-  // vec3 debugcol = vec3(0.);
+  vec3 debugcol = vec3(0.);
 
 
   /* 
@@ -76,7 +76,7 @@ void main() {
     vec3 rd = normalize(vec3(z, 1.));
     float dt = 0.;
 
-    float count = 75.;
+    float count = 200.;
     float b2 = roundh(uBass*2., 10.);
     float e3 = roundh(uEnergy*3., 10.);
     float t = uTime*.3;
@@ -91,46 +91,74 @@ void main() {
       if (d < .001 || dt > 100.) break; // Stop if SDF returns small value or dt exceeds a far distance
     }
     
-    dt *= 0.05;
+    dt *= 0.075;
     dt = min(dt, 1.);
 
-    float w = step(0.999, dt);
+    float w = 1.2 - smoothstep(0.1, 1., dt);
+    w *= step(0.25, w);
 
-    /* SET VALUES VERSION */
-    // vec3 pal = palette( 
-    //   sin(time*1.212730)* uv.y + cos(time*2.1980312) * uv.x, 
-    //   vec3(.5,.5,.5),
-    //   vec3(.5,.5,.5),
-    //   vec3(.5,0.,.3),
-    //   vec3(0.73,0.,0.1)
-    // );
+    // Mask Palette
+    vec3 mPal = palette( 
+      // sin(time*1.212730)* uv.y + cos(time*2.1980312) * uv.x, 
+      length(uv * uBass) * sin(uEnergy) * 5.,
+      // vec3(.5,.5,.5),
+      // vec3(.5,.5,.5),
+      // vec3(1.,1.,1.),
+      // vec3(0.08,0.,0.9)
 
-    /* DEBUG VERSION */
-    vec3 pal = palette( 
-      sin(time*1.212730)* uv.y + cos(time*2.1980312) * uv.x, 
-      uRSGC5,
+      // vec3(0.5, 0.5, 0.5),
+      // vec3(0.5, 0.5, 0.5),
+      // vec3(1., 1., 1.),
+      // vec3(0.3, 0.2, 0.1)
+
+      uRSGC5, // LEVA DEBUG UNIFORMS
       uRSGC6,
       uRSGC7,
       uRSGC8
     );
-    mask = 1. - pal / 3. * w;
+
+    vec3 nmask = vec3(step(w, 0.1));
+    mask = vec3(step(1. - w, 0.5));
+    mask += vec3(uBass*0.25, uHighs*0.25, uEnergy*0.25) * ( mPal);
+    mask += w;
+    mask = smoothstep(0., 1., min(mask, 1.));
     
     float b = smoothstep(0.0, 0.95, dt);
     b = remap(b, 0., 0.7, 0.0, 1.);
     b = min(b, 1.);
     dt = b;
 
-    /* SET VALUES VERSION */
-    // color = palette( dt, vec3(0.5,0.5,0.5),vec3(0.5,0.5,0.5),vec3(1.0,1.0,1.0),vec3(0.3,0.20,0.20));
-
-    /* DEBUG VERSION */
-    color = palette(
+    color = palette( 
       dt, 
-      uRSGC1,
+      // vec3(0.5,0.5,0.5),
+      // vec3(0.5,0.5,0.5),
+      // vec3(1.0,1.0,1.0),
+      // vec3(0.3,0.2,0.2)
+
+      // vec3(0.62, 0.31, .59), // ver 2 start
+      // vec3(1., 1., 1.),
+      // vec3( 1.05, 1., 1.),
+      // vec3(0.63, 0.5, 0.33)
+
+      uRSGC1, // LEVA DEBUG UNIFORMS
       uRSGC2,
       uRSGC3,
       uRSGC4
     );
+
+    color *= mask;
+    color += nmask * mask;
+    mask = vec3(1.);
+
+    prev = texture2D(uTexture, vUv).rgb; // Last renders' values
+
+    // THIS IS KINDA COOL
+    // vec3 diff = color - prev;
+    // diff *= nmask;
+    // color = vec3(step(0.05, diff));
+    // THESE LINES
+
+    mixStrength *= energy;
   }
   /* 
    * **** END ****
@@ -151,7 +179,7 @@ void main() {
     vec2 rot = vec2(2., 3.);
 
     vec2 p = vec2(pow(uBass, 2.), pow(uBass, 2.)) * 0.5;
-    vec2 q = vec2(uEnergy) * -0.5;
+    vec2 q = vec2(uEnergy) * -0.3;
 
     // Spiral Center Points
     vec2 d1 = (1. - cos(time * 1.5)) * vec2(sin(time * 2.5), cos(time * 2.5));
@@ -163,60 +191,36 @@ void main() {
     z *= .5/PI;
 
     z = cmul(rot, z);
-    // z.y += time * .2;
-    // z = vec2(
-    //   remap(z.x, -8., 8., 0., 1.),
-    //   remap(z.y, -8., 8., 0., 1.)
-    // );
-    // z = abs(z);
+    z.y += time * 3.;
     z -= floor(z);
-
-    // z = abs(fract(z) - 0.5) * 2.;
-    // z = smoothstep(0., 1., z);
-
-    // vec2 rotSign = z * 2. - 1.;
-    // float pnx = sign(rotSign.x);
-    // float pny = sign(rotSign.y);
-
-    // vec4 prev = texture2D(uTexture, vec2(vUv.x, vUv.y));
-    // float f = texture2D(uFFTTexture, uv.yx).r * step(0., uv.y);
-    // f += texture2D(uFFTTexture, -uv.yx).r * step(uv.y, 0.);
 
     float e = remap(uEnergy, 0., 1., .2, 1.); 
     z -= .5;
     z = vec2(pow(length(z), e * 1.5));
-    // z /= (pow(uEnergy, 8.) + pow(uEnergy, .9)) * 1.25;
-    // z -= uEnergy * 0.2;
     z = smoothstep(0.2, e, z);
     // z = mod(z, .3);
     // z = smoothstep(0., 1., z);
 
     z = cdiv( z-p, z-q );
 
-    // float imx = z.x/PI;
-    // float imy = z.y/PI;
+    float imx = z.x/PI; 
 
-    // z = clog(z);
-    // z = mod(z, 0.5);
+    color = palette(
+      imx, 
+      // z.x,
+      // vec3(0.5,0.5,0.5),
+      // vec3(0.5,0.5,0.5),
+      // vec3(1.0,1.0,1.0),
+      // vec3(0.3,0.20,0.20) // Last Value Swap option A
+      // vec3(0.54, 0.31, 0.21) // Last Value Swap option B
 
-    // color = palette( z.x + z.y, vec3(0.50,0.52,0.53), vec3(.46,.32,.35), vec3(.82,.84,.65), vec3(0.53,0.23,0.22));
-    // color -= floor(color);
-    // color += palette( imx, vec3(0.59,.48,0.75), vec3(.46,.32,.35), vec3(.82,.84,.65), vec3(0.53,0.23,0.22)) * .5;
-    // color -= floor(color);
-    // color = vec3(floor(abs(z.x)) / 8.);
-    // color = vec3(z, 0.);
-
-    /* SET VALUES VERSION */
-    // color = .9 - palette(z.x, vec3(0.5,0.5,0.5),vec3(0.5,0.5,0.5),vec3(1.0,1.0,1.0),vec3(0.3,0.20,0.20));
-
-    /* DEBUG VERSION */
-    color = .9 - palette(
-      z.x, 
-      uSCGC1,
+      uSCGC1, // LEVA UNIFORMS
       uSCGC2,
       uSCGC3,
-      uSCGC4);
-    mixStrength = 1. - e;
+      uSCGC4
+    );
+
+    mixStrength = mixStrength - (mixStrength * e);
   }
   /* 
    * **** END ****
@@ -275,27 +279,25 @@ void main() {
     zz += re * uHighs;
     zz *= uEnergy;
 
-    /* SET COLORS VERSION */
-    // color = palette( 
-    //     zz,
-    //     // vec3(.5,.5,.5),
-    //     // vec3(.5,.5,.5),
-    //     // vec3(1.5,1.5,1.5),
-    //     // vec3(0.825,0.937,0.995)),
-    //     vec3(.8,.5,.5),
-    //     vec3(.4,.3,.1),
-    //     vec3(1.,1.,1.),
-    //     vec3(0.335,0.180,0.084));
-
-    /* DEBUG VERSION */
     color = palette( 
       zz,
-      uMGC1,
+      // vec3(.5,.5,.5),
+      // vec3(.5,.5,.5),
+      // vec3(1.5,1.5,1.5),
+      // vec3(0.825,0.937,0.995)),
+
+      // vec3(.8,.5,.5),
+      // vec3(.4,.3,.1),
+      // vec3(1.,1.,1.),
+      // vec3(0.335,0.180,0.084)
+
+      uMGC1, // LEVA UNIFORMS
       uMGC2,
       uMGC3,
       uMGC4
     );
-    mixStrength = 0.25 - (.25*energy);
+
+    mixStrength = mixStrength - (mixStrength * energy);
   }
 
   /* 
@@ -344,7 +346,7 @@ void main() {
       dist + 0.2 * abs(cos(time * 2.43)), 
       dist + 0.6 * abs(sin(time * 6.69))
     );
-    mixStrength = 0.15 * f;
+    mixStrength = mixStrength * f;
   }
 
   /* ***END***
@@ -357,6 +359,7 @@ void main() {
     prev, 
     color,
     mixStrength
+    // 1.
   );
   color *= mask; // apply mask, defaults to 1.
   color *= 0.99; // fade

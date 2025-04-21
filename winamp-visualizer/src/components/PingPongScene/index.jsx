@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useLayoutEffect } from "react";
 import { useThree, useFrame, extend } from "@react-three/fiber";
 import { shaderMaterial } from "@react-three/drei";
 import * as THREE from "three";
@@ -46,7 +46,7 @@ const uniforms = {
 const CustomShaderMaterial = shaderMaterial(uniforms, vertexShader, fragmentShader);
 extend({ CustomShaderMaterial });
 
-const PingPongScene = ({ segments = 2 }) => {
+const PingPongScene = ({ files = [], segments = 2 }) => {
   // Used for resizing the plane to fullscreen aspect ratio
   const { viewport } = useThree();
 
@@ -97,7 +97,7 @@ const PingPongScene = ({ segments = 2 }) => {
   });
 
   // Initiate FFTTexture Analysis Hook
-  const [dataTexture, sampleRate, setAudioPlay] = useFFTTexture(fftSize);
+  const [dataTexture, sampleRate] = useFFTTexture(files, fftSize);
 
   // Stateful bass/mids/highs sampling range for averaging and passing uniforms
   const [binInfo, setBinInfo] = useState({
@@ -114,16 +114,11 @@ const PingPongScene = ({ segments = 2 }) => {
   });
 
   // Scale Plane to Fullscreen
-  useEffect(() => {
+  useLayoutEffect(() => {
     plane.current.scale.x = viewport.width;
     plane.current.scale.y = viewport.height;
     bufferMaterial.uniforms.uAspect.value = viewport.width / viewport.height;
   }, [viewport, bufferMaterial]);
-
-  // User must interact to start playing audio
-  const onClick = () => {
-    setAudioPlay();
-  };
 
   // Update the binInfo based on sampleRate and fftSize
   useEffect(() => {
@@ -181,9 +176,7 @@ const PingPongScene = ({ segments = 2 }) => {
   });
 
   return (
-    <mesh
-      ref={plane}
-      onClick={onClick}>
+    <mesh ref={plane}>
       <planeGeometry args={[1, 1, segments, segments]} />
       <customShaderMaterial
         ref={shaderMaterial}

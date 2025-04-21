@@ -47,9 +47,7 @@ void main() {
   }
 
   if (uPreset == 1.) {
-    b = 0.;
-    m = 0.;
-    h = 0.;
+    color *= e;
   }
 
   if (uPreset == 2.) {

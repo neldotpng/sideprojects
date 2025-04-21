@@ -1,33 +1,21 @@
 import { useState, useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { useControls, folder, button } from "leva";
+import { useControls, folder, button, buttonGroup } from "leva";
 
-const songs = [
-  "/audio/00.mp3",
-  "/audio/01.mp3",
-  "/audio/02.mp3",
-  "/audio/03.mp3",
-  "/audio/04.mp3",
-  "/audio/05.mp3",
-  "/audio/06.mp3",
-  "/audio/07.mp3",
-  "/audio/08.mp3",
-  "/audio/09.mp3",
-  "/audio/10.mp3",
-  "/audio/11.mp3",
-  "/audio/12.mp3",
-  "/audio/13.mp3",
-  "/audio/14.mp3",
-  "/audio/15.mp3",
-  // "/audio/16.mp3",
-];
-
-const songIndex = Math.floor(Math.random() * songs.length);
-
-const useFFTTexture = ({ fftSize = 1024 }) => {
-  const [song, setSong] = useState(songs[songIndex]);
-  const [playbackRate, setPlaybackRate] = useState(1);
+const useFFTTexture = (files, fftSize = 1024) => {
+  // Song Selection via Leva
+  const [songIndex, setSongIndex] = useState(0);
+  // Array of audio files uploaded
+  const [songs, setSongs] = useState(files);
+  // Generated file URLs for loading via AudioLoader
+  const [song, setSong] = useState("");
+  // Used to dispose of old file URLs
+  const prevSong = useRef();
+  // Variable for tracking time for -10s/+10s Leva Controls
+  const timeDiff = useRef(0);
+  // Playback speed variable for Leva
+  const [speed, setSpeed] = useState(1);
 
   // Return values
   const [textureData, setTextureData] = useState();
@@ -35,7 +23,6 @@ const useFFTTexture = ({ fftSize = 1024 }) => {
 
   // Effects management
   const [audioLoaded, setAudioLoaded] = useState(false);
-  const [playable, setPlayable] = useState(false);
 
   // THREE Audio Constants
   const listener = useRef(new THREE.AudioListener());
@@ -44,84 +31,158 @@ const useFFTTexture = ({ fftSize = 1024 }) => {
   const loader = useRef(new THREE.AudioLoader());
 
   // Leva Controls
-  const [Audio] = useControls(() => ({
-    Audio: folder(
-      {
-        "Playback Rate": {
-          value: playbackRate,
-          min: 0.1,
-          max: 2,
-          step: 0.1,
-        },
-        Song: {
-          value: songIndex,
-          min: 0,
-          max: songs.length - 1,
-          step: 1,
-        },
-        "Start Time": {
-          value: { min: 0, sec: 0 },
-          min: 0,
-          max: 60,
-          step: 1,
-        },
-        "Update Settings": button((get) => {
-          const i = get("Audio.Song");
-          const pr = get("Audio.Playback Rate");
+  useControls(
+    () => ({
+      "Audio Controls": folder(
+        {
+          "Loop Song": {
+            value: false,
+            onChange: (val) => {
+              audio.current.setLoop(val);
+            },
+          },
+          "Song Index": {
+            value: 0,
+            min: 0,
+            max: songs.length > 0 ? songs.length - 1 : 0,
+            step: 1,
+          },
+          Speed: {
+            value: speed,
+            min: 0.1,
+            max: 2,
+            step: 0.1,
+          },
+          "Start Time": {
+            value: { min: 0, sec: 0 },
+            min: 0,
+            max: 59,
+            step: 1,
+          },
+          Playback: buttonGroup({
+            "-10s": () => {
+              timeDiff.current -= 10;
+              const offset = audio.current.context.currentTime + timeDiff.current;
+              seekAudio(offset);
+            },
+            "Play/Pause": () => pausePlayAudio(),
+            "+10s": () => {
+              timeDiff.current += 10;
+              const offset = audio.current.context.currentTime + timeDiff.current;
+              seekAudio(offset);
+            },
+          }),
+          "Update and Restart": button((get) => {
+            const pr = get("Audio Controls.Speed");
+            const si = get("Audio Controls.Song Index");
+            const st = get("Audio Controls.Start Time");
+            const ct = st.min * 60 + st.sec;
 
-          const st = get("Audio.Start Time");
-          const ct = st.min * 60 + st.sec;
+            if (ct > audio.current?.buffer?.duration) {
+              const t = Math.floor(audio.current.buffer.duration);
+              const mins = Math.round((t / 60) * 100) / 100;
+              const secs = Math.floor((mins - Math.floor(mins)) * 60);
 
-          if (ct > audio.current?.buffer?.duration) {
-            const t = Math.floor(audio.current.buffer.duration);
-            const mins = Math.round((t / 60) * 100) / 100;
-            const secs = Math.floor((mins - Math.floor(mins)) * 60);
-
-            console.warn(
-              `"Start Time" exceeded max duration of the audio file. 
+              window.alert(
+                `"Start Time" exceeded max duration of the audio file. 
                 Reduce value below: ${Math.floor(mins)}m ${secs}s`
-            );
-          } else {
-            audio.current.offset = ct;
-          }
+              );
+            } else {
+              timeDiff.current = ct - audio.current.context.currentTime;
+              audio.current.offset = ct;
+              audio.current.stop();
+              audio.current.play();
+            }
 
-          setPlaybackRate(pr);
-          setSong(songs[i]);
-        }),
-        "Play/Pause Audio": button(() => {
-          pausePlayAudio();
-        }),
-        "Restart Audio": button(() => {
-          audio.current.stop();
-          audio.current.play();
-        }),
-      },
-      {
-        collapsed: true,
-      }
-    ),
-  }));
+            setSpeed(pr);
+            setSongIndex(si);
+          }),
+        },
+        { collapsed: true }
+      ),
+    }),
+    [songs]
+  );
 
+  // Seek playback
+  const seekAudio = (offsetInSeconds) => {
+    if (!audio.current.buffer) return;
+
+    const duration = audio.current.buffer.duration;
+    const clampedOffset = Math.max(0, Math.min(offsetInSeconds, duration));
+
+    audio.current.offset = clampedOffset;
+
+    // Stop current playback and play from the new offset
+    audio.current.stop();
+    audio.current.play(0);
+  };
+
+  // Control playback from leva controls
+  const pausePlayAudio = () => {
+    audio.current.isPlaying ? audio.current.pause() : audio.current.play();
+  };
+
+  // Function to call when song ends
+  const playNextSong = () => {
+    if (songIndex + 1 < songs.length) {
+      setSongIndex(songIndex + 1);
+    } else {
+      setSongIndex(0);
+    }
+  };
+  // Set onEnded function for audio once on load
+  audio.current.onEnded = playNextSong;
+
+  // Update Playback Rate
   useEffect(() => {
-    audio.current.setPlaybackRate(playbackRate);
-  }, [playbackRate]);
+    audio.current.setPlaybackRate(speed);
+  }, [speed]);
+
+  // Update Song After File Upload
+  useEffect(() => {
+    setSongs(files);
+  }, [files]);
+
+  // Create url for AudioLoader based on songs array and songIndex
+  useEffect(() => {
+    if (songs[songIndex]) {
+      // Revoke last song URL, prevents doubles when audio is restarted
+      URL.revokeObjectURL(prevSong.current);
+      // Create new song URL
+      const url = URL.createObjectURL(songs[songIndex]);
+
+      setSong(url);
+    }
+  }, [songs, songIndex]);
 
   // Hook to Load New Song
   useEffect(() => {
-    if (!playable) return;
+    // If no song detected, return
+    if (song === "") return;
 
+    prevSong.current = song;
+
+    // Set the sampleRate for the song, used for analysis
     setSampleRate(listener.current.context.sampleRate);
 
-    audio.current.stop();
+    // Stop current audio when new audio is being loaded
+    if (audio.current.isPlaying) audio.current.stop();
 
-    loader.current.load(song, (buffer) => {
-      audio.current.setBuffer(buffer);
-      audio.current.setLoop(true);
-      audio.current.play();
+    loader.current.load(
+      song,
+      (buffer) => {
+        audio.current.setBuffer(buffer);
+        audio.current.play();
 
-      setAudioLoaded(true);
-    });
-  }, [song, playable]);
+        timeDiff.current = -audio.current.context.currentTime;
+        setAudioLoaded(true);
+      }
+      // (progress) => {
+      //   console.log((progress.loaded / progress.total) * 100);
+      // }
+    );
+  }, [song]);
 
   // Update FFT Texture Data after audio loads
   useEffect(() => {
@@ -137,17 +198,7 @@ const useFFTTexture = ({ fftSize = 1024 }) => {
     textureData.needsUpdate = true;
   });
 
-  // Needed for user interaction to initiate audio
-  const setAudioPlayable = () => {
-    setPlayable(true);
-  };
-
-  // Control playback from leva controls
-  const pausePlayAudio = () => {
-    audio.current.isPlaying ? audio.current.pause() : audio.current.play();
-  };
-
-  return [textureData, sampleRate, setAudioPlayable];
+  return [textureData, sampleRate];
 };
 
 export default useFFTTexture;

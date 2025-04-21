@@ -3,23 +3,18 @@ import { Perf } from "r3f-perf";
 import { useControls, folder } from "leva";
 
 const Debug = () => {
-  const { enableOrbitControls, enablePerf } = useControls({
-    "Debug Tools": folder(
-      {
-        enableOrbitControls: false,
-        enablePerf: true,
-      },
-      { collapsed: true }
-    ),
+  const { Stats } = useControls({
+    "Debug Tools": folder({
+      Stats: false,
+    }),
   });
 
   return (
     <>
       <Perf
         position="top-left"
-        style={{ display: enablePerf ? "block" : "none" }}
+        style={{ display: Stats ? "block" : "none" }}
       />
-      {enableOrbitControls ? <OrbitControls /> : null}
     </>
   );
 };

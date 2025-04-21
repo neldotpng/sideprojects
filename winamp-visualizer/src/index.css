@@ -18,7 +18,8 @@
 }
 
 html, 
-body {
+body,
+p {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -31,4 +32,44 @@ body {
   height: 100%;
   top: 0;
   left: 0;
+}
+
+.dropzone {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 50%;
+  max-width: 500px;
+  max-height: 350px;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  background-color: #fafafa;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
+  font-family: Helvetica, Arial, sans-serif;
+  border-radius: 10px;
+  border: 5px dashed #0b5896;
+  font-size: 30px;
+  text-align: center;
+  color: #000;
+}
+
+.fileSelectButton {
+  cursor: pointer;
+  background-color: #0b5896;
+  padding: 20px 30px;
+  border-radius: 30px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 1;
+  font-size: 18px;
+  color: #fff;
+}
+
+.fileSelect {
+  width: 0;
 }
