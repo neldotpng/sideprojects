@@ -17,7 +17,7 @@ const App = () => {
       </div>
       <Scroller
         ref={scroller}
-        sections={[100, 125, 150, 175, 200]}
+        sections={[500]}
       />
     </>
   );

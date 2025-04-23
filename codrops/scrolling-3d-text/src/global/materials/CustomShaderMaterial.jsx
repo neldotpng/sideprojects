@@ -3,7 +3,7 @@ import { extend, useFrame, useThree } from "@react-three/fiber";
 import { shaderMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
-const CustomShaderMaterial = ({ vertexShader, fragmentShader, uniforms, ...props }) => {
+const CustomShaderMaterial = ({ vertexShader, fragmentShader, uniforms, ref, ...props }) => {
   const { size } = useThree();
 
   const ShaderMaterialInstance = shaderMaterial(
@@ -20,16 +20,17 @@ const CustomShaderMaterial = ({ vertexShader, fragmentShader, uniforms, ...props
   extend({ ShaderMaterialInstance });
 
   useEffect(() => {
-    props.ref.current?.uResolution.set(size.width, size.height);
-  }, [size, props.ref]);
+    ref.current?.uResolution.set(size.width, size.height);
+  }, [size, ref]);
 
   useFrame((state, delta) => {
-    props.ref.current.uTime += delta;
+    ref.current.uTime += delta;
   });
 
   return (
     <shaderMaterialInstance
       {...props}
+      ref={ref}
       // Random Key Generated when imported shaders are updated
       key={`${ShaderMaterialInstance.key}-${Math.random()}}`}
       vertexShader={vertexShader}
