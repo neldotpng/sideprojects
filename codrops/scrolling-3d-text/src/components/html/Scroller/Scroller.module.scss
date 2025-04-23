@@ -1,0 +1,19 @@
+.scroller {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden scroll;
+  z-index: 2;
+  overscroll-behavior: none;
+}
+
+.scrollerElement {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
