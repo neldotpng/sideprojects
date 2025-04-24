@@ -14,8 +14,8 @@ const useScroller = (ref, reactive = false) => {
   const getSectionInfo = useCallback(() => {
     const { children } = ref.current;
     return [...children].map((child) => {
-      const top = child.style.top ? parseInt(child.style.top) : 0;
-      const height = parseInt(child.offsetHeight);
+      const top = child.dataset.top ? parseFloat(child.dataset.top) : 0;
+      const height = parseFloat(child.offsetHeight);
       const bottom = Math.round(top + height);
       return { top, height, bottom };
     });

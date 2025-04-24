@@ -1,19 +1,17 @@
 import { useRef, useMemo, useCallback } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
-import * as THREE from "three";
+// import * as THREE from "three";
 
+import { useScrollStore } from "@/global/Store";
 import CustomShaderMaterial from "@/global/materials/CustomShaderMaterial";
 import vertexShader from "./shaders/vertexShader.glsl?raw";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";
 
-const ScrollingText = ({
-  position = [0, 0, 0],
-  fontSize = 1,
-  groupHeight,
-  scrollData,
-  ...props
-}) => {
+const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, ...props }) => {
+  // Get ScrollerContext data
+  const { scrollData, lenis } = useScrollStore();
+
   const intersecting = useRef(false);
   const textRef = useRef();
   const shaderRef = useRef();
@@ -46,6 +44,7 @@ const ScrollingText = ({
     }
 
     shaderRef.current.uniforms.uScroll.value = scrollData.current.progress;
+    shaderRef.current.uniforms.uSpeed.value = lenis.current.velocity;
   });
 
   return (

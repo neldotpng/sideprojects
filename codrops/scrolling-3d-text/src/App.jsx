@@ -1,10 +1,12 @@
 import { useRef } from "react";
 import { Canvas } from "@react-three/fiber";
+
 import Scene from "@/components/three/Scene";
 import Scroller from "@/components/html/Scroller";
 
 const App = () => {
   const scroller = useRef();
+  const lenis = useRef();
 
   return (
     <>
@@ -12,12 +14,16 @@ const App = () => {
         <Canvas
           eventSource={scroller}
           eventPrefix="client">
-          <Scene scroller={scroller} />
+          <Scene
+            scroller={scroller}
+            lenis={lenis}
+          />
         </Canvas>
       </div>
       <Scroller
-        ref={scroller}
-        sections={[500]}
+        wrapperRef={scroller}
+        lenisRef={lenis}
+        sections={[500, 300]}
       />
     </>
   );

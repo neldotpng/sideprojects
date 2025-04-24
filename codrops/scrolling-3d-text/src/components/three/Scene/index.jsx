@@ -1,6 +1,7 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 
+import { useScrollStore } from "@/global/Store";
 import Debug from "@/global/Debug";
 import ScrollingText from "@/components/three/ScrollingText";
 import useScroller from "@/global/hooks/useScroller";
@@ -38,26 +39,30 @@ const words = [
   "palimpsest",
 ];
 
-// const test = ["test"];
+const Scene = ({ scroller, lenis: lenisRef }) => {
+  const scrollDataRef = useScroller(scroller);
+  const { scrollData, lenis } = useScrollStore();
 
-const Scene = ({ scroller }) => {
-  const scrollData = useScroller(scroller);
   const groupHeight = useRef(1.5 * words.length);
   const group = useRef();
 
-  useFrame(() => {
+  useEffect(() => {
+    useScrollStore.setState({ scrollData: scrollDataRef, lenis: lenisRef });
+  }, [scrollDataRef, lenisRef]);
+
+  useFrame((state) => {
+    if (!lenis.current && !scrollData.current) return;
+
+    // Initiate Lenis rAF in R3F
+    const timeInMs = state.clock.getElapsedTime() * 1000;
+    lenis.current.raf(timeInMs);
+
     group.current.position.y = groupHeight.current * scrollData.current.progress;
   });
 
   return (
     <>
       <Debug />
-
-      {/* <ambientLight intensity={0.1} />
-      <directionalLight
-        color="red"
-        position={[0, 0, 5]}
-      /> */}
 
       <group
         ref={group}
@@ -66,7 +71,6 @@ const Scene = ({ scroller }) => {
           <ScrollingText
             key={index}
             groupHeight={groupHeight.current}
-            scrollData={scrollData}
             position={[-3, index * -1.5, 0]}
             fontSize={1}>
             {word[0].toUpperCase() + word.slice(1)}

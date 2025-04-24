@@ -1,9 +1,13 @@
-import { useEffect } from "react";
-import cx from "./scroller.module.scss";
+import { useEffect, useRef } from "react";
+import Lenis from "lenis";
+
 import { debounce } from "@/global/hooks/useDebounce";
+import cx from "./scroller.module.scss";
 
 // Sections Prop is an array of numbers representing section heights in vh units
-const Scroller = ({ ref, sections = [100] }) => {
+const Scroller = ({ wrapperRef, lenisRef, sections = [100] }) => {
+  const contentRef = useRef();
+
   useEffect(() => {
     // Function to handle the resize event
     // This function will set the top position of each section based on its height
@@ -12,7 +16,7 @@ const Scroller = ({ ref, sections = [100] }) => {
       let totalHeight = 0;
 
       sections.forEach((section, i) => {
-        ref.current.children[i].style.top = i === 0 ? `0px` : `${totalHeight}px`;
+        contentRef.current.children[i].dataset.top = i === 0 ? 0 : totalHeight;
         totalHeight += (section / 100) * innerHeight;
       });
     }, 100);
@@ -25,22 +29,42 @@ const Scroller = ({ ref, sections = [100] }) => {
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [ref, sections]);
+  }, [wrapperRef, sections]);
+
+  // Initialize Lenis for smooth scrolling
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+
+    const lenis = new Lenis({
+      wrapper: wrapperRef.current,
+      content: contentRef.current,
+      smooth: true,
+      lerp: 0.1,
+    });
+
+    lenisRef.current = lenis;
+
+    return () => {
+      lenis.destroy();
+    };
+  }, [wrapperRef, lenisRef]);
 
   return (
     <div
       id="scroller"
       className={cx.scroller}
-      ref={ref}>
-      {sections.map((section, index) => (
-        <div
-          key={index}
-          className={cx.scrollerElement}
-          style={{
-            height: `${section}vh`,
-          }}
-        />
-      ))}
+      ref={wrapperRef}>
+      <div ref={contentRef}>
+        {sections.map((section, index) => (
+          <div
+            key={index}
+            className={cx.scrollerElement}
+            style={{
+              height: `${section}vh`,
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 };
