@@ -21,9 +21,9 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, ...pro
       if (!scrollData.current) return false;
 
       const scroll3D = -scrollData.current.progress * groupHeight;
-      const isNowIntersecting = scroll3D <= position[1] + 0.75 && scroll3D >= position[1] - 0.75;
+      const range = [position[1] + 0.75, position[1] - 0.75];
 
-      return isNowIntersecting;
+      return [scroll3D, range];
     },
     [groupHeight, position]
   );
@@ -33,16 +33,26 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, ...pro
       uScroll: { value: 0 },
       uIntersecting: { value: false },
       uVelocity: { value: 0 },
+      uIntersectionStrength: { value: 0 },
     }),
     []
   );
 
   useFrame(() => {
-    const isNowIntersecting = calcIntersection(scrollData);
+    const [scroll3D, range] = calcIntersection(scrollData);
+    const isNowIntersecting = scroll3D <= range[0] && scroll3D >= range[1];
 
     if (intersecting.current !== isNowIntersecting) {
       intersecting.current = isNowIntersecting;
       shaderRef.current.uniforms.uIntersecting.value = isNowIntersecting;
+    }
+
+    if (isNowIntersecting) {
+      const mean = (range[0] + range[1]) / 2;
+      const strength = 1 - Math.abs(Math.pow(scroll3D - mean, 3));
+      shaderRef.current.uniforms.uIntersectionStrength.value = strength;
+    } else {
+      shaderRef.current.uniforms.uIntersectionStrength.value = 0;
     }
 
     shaderRef.current.uniforms.uScroll.value = scrollData.current.progress;
@@ -54,7 +64,8 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, ...pro
       ref={textRef}
       fontSize={fontSize}
       position={position}
-      anchorX={0}>
+      anchorX={0}
+      {...props}>
       <CustomShaderMaterial
         ref={shaderRef}
         vertexShader={vertexShader}

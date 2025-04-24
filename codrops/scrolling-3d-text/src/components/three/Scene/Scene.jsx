@@ -74,18 +74,18 @@ const Scene = ({ scrollerRef, lenisRef }) => {
           <ScrollingText
             key={index}
             groupHeight={groupHeight.current}
-            position={[-3, index * spacing.current + spacing.current, 0]}
-            fontSize={1}>
-            {word[0].toUpperCase() + word.slice(1)}
+            position={[-3.75, index * spacing.current + spacing.current, 0]}
+            fontWeight={900}>
+            {word.toUpperCase()}
           </ScrollingText>
         ))}
         {words.map((word, index) => (
           <ScrollingText
             key={index}
             groupHeight={groupHeight.current}
-            position={[-3, index * -spacing.current, 0]}
-            fontSize={1}>
-            {word[0].toUpperCase() + word.slice(1)}
+            position={[-3.75, index * -spacing.current, 0]}
+            fontWeight={900}>
+            {word.toUpperCase()}
           </ScrollingText>
         ))}
         {words.slice(0, 3).map((word, index) => (
@@ -93,12 +93,12 @@ const Scene = ({ scrollerRef, lenisRef }) => {
             key={index}
             groupHeight={groupHeight.current}
             position={[
-              -3,
+              -3.75,
               index * -spacing.current - (words.length - 1) * spacing.current - spacing.current,
               0,
             ]}
-            fontSize={1}>
-            {word[0].toUpperCase() + word.slice(1)}
+            fontWeight={900}>
+            {word.toUpperCase()}
           </ScrollingText>
         ))}
       </group>
