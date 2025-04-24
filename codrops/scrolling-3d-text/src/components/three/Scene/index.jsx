@@ -1,9 +1,8 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { ScrollControls, Scroll, Html } from "@react-three/drei";
 
 import Debug from "@/global/Debug";
 import ScrollingText from "@/components/three/ScrollingText";
-import useScroller from "@/global/hooks/useScroller";
+import Scroller from "@/components/dom/Scroller";
 
 const words = [
   "serendipity",
@@ -38,42 +37,30 @@ const words = [
   "palimpsest",
 ];
 
-// const test = ["test"];
+const test = ["test"];
 
-const Scene = ({ scroller }) => {
-  const scrollData = useScroller(scroller);
-  const groupHeight = useRef(1.5 * words.length);
-  const group = useRef();
-
-  useFrame(() => {
-    group.current.position.y = groupHeight.current * scrollData.current.progress;
-  });
-
+const Scene = () => {
   return (
-    <>
+    <ScrollControls
+      pages={10}
+      damping={0.1}>
       <Debug />
 
-      {/* <ambientLight intensity={0.1} />
-      <directionalLight
-        color="red"
-        position={[0, 0, 5]}
-      /> */}
-
-      <group
-        ref={group}
-        position={[0, 0, 0]}>
-        {words.map((word, index) => (
+      <group position={[0, 0, 0]}>
+        {test.map((word, index) => (
           <ScrollingText
             key={index}
-            groupHeight={groupHeight.current}
-            scrollData={scrollData}
             position={[-3, index * -1.5, 0]}
             fontSize={1}>
             {word[0].toUpperCase() + word.slice(1)}
           </ScrollingText>
         ))}
       </group>
-    </>
+
+      <Html>
+        <Scroller sections={[500, 200, 300]} />
+      </Html>
+    </ScrollControls>
   );
 };
 
