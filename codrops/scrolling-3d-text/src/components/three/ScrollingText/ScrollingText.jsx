@@ -18,6 +18,8 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, ...pro
 
   const calcIntersection = useCallback(
     (scrollData) => {
+      if (!scrollData.current) return false;
+
       const scroll3D = -scrollData.current.progress * groupHeight;
       const isNowIntersecting = scroll3D <= position[1] + 0.75 && scroll3D >= position[1] - 0.75;
 
@@ -28,9 +30,9 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, ...pro
 
   const uniforms = useMemo(
     () => ({
-      uScroll: 0,
-      uIntersecting: false,
-      uSpeed: 0,
+      uScroll: { value: 0 },
+      uIntersecting: { value: false },
+      uVelocity: { value: 0 },
     }),
     []
   );
@@ -44,7 +46,7 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, ...pro
     }
 
     shaderRef.current.uniforms.uScroll.value = scrollData.current.progress;
-    shaderRef.current.uniforms.uSpeed.value = lenis.current.velocity;
+    shaderRef.current.uniforms.uVelocity.value = lenis.current.velocity;
   });
 
   return (

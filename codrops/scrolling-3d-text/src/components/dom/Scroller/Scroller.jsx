@@ -4,6 +4,8 @@ import Lenis from "lenis";
 import { debounce } from "@/global/hooks/useDebounce";
 import cx from "./scroller.module.scss";
 
+// Component for a smooth scrolling overlay that sits on top of the 3D scene
+// Implements Lenis for smooth scrolling
 // Sections Prop is an array of numbers representing section heights in vh units
 const Scroller = ({ wrapperRef, lenisRef, sections = [100] }) => {
   const contentRef = useRef();
@@ -40,6 +42,7 @@ const Scroller = ({ wrapperRef, lenisRef, sections = [100] }) => {
       content: contentRef.current,
       smooth: true,
       lerp: 0.1,
+      infinite: true,
     });
 
     lenisRef.current = lenis;

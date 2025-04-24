@@ -15,7 +15,8 @@ const useScroller = (ref, reactive = false) => {
   // Function to get the positions of each section
   const getSectionInfo = useCallback(() => {
     const { children } = ref.current;
-    return [...children].map((child) => {
+    const scrollSections = children[0].querySelectorAll("div[data-top]");
+    return [...scrollSections].map((child) => {
       const top = child.dataset.top ? parseFloat(child.dataset.top) : 0;
       const height = parseFloat(child.offsetHeight);
       const bottom = Math.round(top + height);

@@ -43,7 +43,8 @@ const Scene = ({ scrollerRef, lenisRef }) => {
   const scrollDataRef = useScroller(scrollerRef);
   const { scrollData, lenis } = useScrollStore();
 
-  const groupHeight = useRef(1.5 * words.length);
+  const spacing = useRef(1.5);
+  const groupHeight = useRef(spacing.current * words.length);
   const group = useRef();
 
   useEffect(() => {
@@ -57,9 +58,9 @@ const Scene = ({ scrollerRef, lenisRef }) => {
     const timeInMs = state.clock.getElapsedTime() * 1000;
     lenis.current.raf(timeInMs);
 
-    // console.log(lenis.current);
+    // console.log(scrollData.current.sectionProgress);
 
-    group.current.position.y = groupHeight.current * scrollData.current.progress;
+    group.current.position.y = groupHeight.current * scrollData.current.sectionProgress;
   });
 
   return (
@@ -69,11 +70,33 @@ const Scene = ({ scrollerRef, lenisRef }) => {
       <group
         ref={group}
         position={[0, 0, 0]}>
+        {[words[words.length - 1], words[words.length - 2]].map((word, index) => (
+          <ScrollingText
+            key={index}
+            groupHeight={groupHeight.current}
+            position={[-3, index * spacing.current + spacing.current, 0]}
+            fontSize={1}>
+            {word[0].toUpperCase() + word.slice(1)}
+          </ScrollingText>
+        ))}
         {words.map((word, index) => (
           <ScrollingText
             key={index}
             groupHeight={groupHeight.current}
-            position={[-3, index * -1.5, 0]}
+            position={[-3, index * -spacing.current, 0]}
+            fontSize={1}>
+            {word[0].toUpperCase() + word.slice(1)}
+          </ScrollingText>
+        ))}
+        {words.slice(0, 3).map((word, index) => (
+          <ScrollingText
+            key={index}
+            groupHeight={groupHeight.current}
+            position={[
+              -3,
+              index * -spacing.current - (words.length - 1) * spacing.current - spacing.current,
+              0,
+            ]}
             fontSize={1}>
             {word[0].toUpperCase() + word.slice(1)}
           </ScrollingText>

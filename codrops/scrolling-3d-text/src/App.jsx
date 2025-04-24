@@ -23,7 +23,7 @@ const App = () => {
       <Scroller
         wrapperRef={scrollerRef}
         lenisRef={lenisRef}
-        sections={[500, 300]}
+        sections={[500]}
       />
     </>
   );
