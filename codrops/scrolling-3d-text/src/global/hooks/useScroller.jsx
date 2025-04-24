@@ -2,8 +2,10 @@ import { useState, useMemo, useRef, useCallback } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { useDebounce } from "@/global/hooks/useDebounce";
 
+// Can only be used inside Canvas
 const useScroller = (ref, reactive = false) => {
   const { size } = useThree();
+
   const [vh, setVh] = useState(size.height);
   const [scrollState, setScrollState] = useState({});
 
@@ -51,7 +53,6 @@ const useScroller = (ref, reactive = false) => {
       (scrollTop + sectionOffset - sectionData.top) / (sectionData.height - sectionHeightOffset);
 
     return {
-      scrollTop: scrollTop,
       scrollBottom: scrollBottom,
       progress: progress,
       sectionProgress: sectionProgress,
@@ -63,12 +64,11 @@ const useScroller = (ref, reactive = false) => {
   const scrollData = useRef(getScrollData(ref));
 
   const updateScrollData = (ref, prevState) => {
-    const { scrollTop, scrollBottom, progress, sectionProgress, section, sectionInfo } =
-      getScrollData(ref);
+    const { scrollBottom, progress, sectionProgress, section, sectionInfo } = getScrollData(ref);
 
     // Update ScrollData state only if the values have changed
-    if (scrollTop !== prevState.scrollTop) {
-      scrollData.current = { ...prevState, scrollBottom, scrollTop, progress, sectionProgress };
+    if (scrollBottom !== prevState.scrollBottom) {
+      scrollData.current = { ...prevState, scrollBottom, progress, sectionProgress };
     }
     if (sectionInfo !== prevState.sectionInfo) {
       scrollData.current = { ...prevState, sectionInfo };

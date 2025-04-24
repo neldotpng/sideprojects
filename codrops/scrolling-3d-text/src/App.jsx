@@ -1,28 +1,28 @@
 import { useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 
-import Scene from "@/components/three/Scene";
-import Scroller from "@/components/html/Scroller";
+import Scene from "@/components/three/Scene/Scene";
+import Scroller from "@/components/dom/Scroller/Scroller";
 
 const App = () => {
-  const scroller = useRef();
-  const lenis = useRef();
+  const scrollerRef = useRef();
+  const lenisRef = useRef();
 
   return (
     <>
       <div style={{ width: "100vw", height: "100vh" }}>
         <Canvas
-          eventSource={scroller}
+          eventSource={scrollerRef}
           eventPrefix="client">
           <Scene
-            scroller={scroller}
-            lenis={lenis}
+            scrollerRef={scrollerRef}
+            lenisRef={lenisRef}
           />
         </Canvas>
       </div>
       <Scroller
-        wrapperRef={scroller}
-        lenisRef={lenis}
+        wrapperRef={scrollerRef}
+        lenisRef={lenisRef}
         sections={[500, 300]}
       />
     </>

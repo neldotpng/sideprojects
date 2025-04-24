@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 
 import { useScrollStore } from "@/global/Store";
 import Debug from "@/global/Debug";
-import ScrollingText from "@/components/three/ScrollingText";
+import ScrollingText from "@/components/three/ScrollingText/ScrollingText";
 import useScroller from "@/global/hooks/useScroller";
 
 const words = [
@@ -39,8 +39,8 @@ const words = [
   "palimpsest",
 ];
 
-const Scene = ({ scroller, lenis: lenisRef }) => {
-  const scrollDataRef = useScroller(scroller);
+const Scene = ({ scrollerRef, lenisRef }) => {
+  const scrollDataRef = useScroller(scrollerRef);
   const { scrollData, lenis } = useScrollStore();
 
   const groupHeight = useRef(1.5 * words.length);
@@ -56,6 +56,8 @@ const Scene = ({ scroller, lenis: lenisRef }) => {
     // Initiate Lenis rAF in R3F
     const timeInMs = state.clock.getElapsedTime() * 1000;
     lenis.current.raf(timeInMs);
+
+    // console.log(lenis.current);
 
     group.current.position.y = groupHeight.current * scrollData.current.progress;
   });
