@@ -100,9 +100,6 @@ const ImageCard = ({ imageSize = 25, margins = 25, imageScale = 2, colRows, hove
       mPos.set(x, y);
     };
 
-    // Remove Listener if Remounted
-    window.removeEventListener("pointermove", (e) => onPointerMove(e));
-
     // Add window listener
     window.addEventListener("pointermove", (e) => onPointerMove(e));
 
