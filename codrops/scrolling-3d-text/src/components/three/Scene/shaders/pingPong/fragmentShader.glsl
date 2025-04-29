@@ -26,6 +26,15 @@ varying vec2 vUv;
 //   return mat2(c, -s, s, c);
 // }
 
+float inverseLerp(float v, float minValue, float maxValue) {
+  return (v - minValue) / (maxValue - minValue);
+}
+
+float remap(float v, float inMin, float inMax, float outMin, float outMax) {
+  float t = inverseLerp(v, inMin, inMax);
+  return mix(outMin, outMax, t);
+}
+
 void main() {
   vec3 color = vec3(0.);
   vec2 uv = vUv * 2. - 1.;
@@ -36,6 +45,8 @@ void main() {
   uv.y /= aspect;
 
   vec2 clampedVel = clamp(uMouseVelocity, vec2(-10.), vec2(10.));
+  float ripples = remap(abs(length(uMouseVelocity)), 0., 10., 2., 1.);
+  float strength = remap(abs(length(uMouseVelocity)), 0., 10., 1., 1.5);
 
   vec3 prev = texture2D(
     uTexture, 
@@ -46,19 +57,12 @@ void main() {
   float mixStrength = .25;
 
   float circ = distance(uv, mouse);
-  circ = 1. - smoothstep(.0, .25, circ);
+  circ = 1. - smoothstep(.0, .33, circ);
   float mask = circ;
 
-  circ = fract(circ + uTime * 1.5) * mask;
+  circ = fract(circ * ripples + fract(uTime * .5) * (2. * strength)) * mask;
   circ = smoothstep(0., 1., circ);
   vec2 dirCirc = vec2(circ) * uMouseVelocity;
-
-  // vec2 fpos = (uv - mouse) * 10.;
-  // fpos *= rot2D(uTime * 5.);
-
-  // float flower = flower2D(fpos, 2., 3., 0.1);
-
-  // dirCirc = vec2(flower) * uMouseVelocity;
 
   color = vec3(dirCirc, 0.);
 
