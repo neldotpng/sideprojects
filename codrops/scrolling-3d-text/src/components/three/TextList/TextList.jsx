@@ -2,13 +2,12 @@ import { useRef, useCallback, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 
 import ScrollingText from "@/components/three/ScrollingText/ScrollingText";
-import { useScrollStore, useMouseStore } from "@/global/Store";
+import { useScrollStore } from "@/global/Store";
 
 const TextList = ({ position = [0, 0, 0], words = ["Test"], fontSize = 1 }) => {
   const { viewport } = useThree();
   const group = useRef();
   const { scrollData } = useScrollStore();
-  const { mousePos } = useMouseStore();
 
   const spacing = useMemo(() => fontSize * 1.5, [fontSize]);
   const groupHeight = useMemo(() => spacing * words.length, [spacing, words]);
@@ -26,13 +25,12 @@ const TextList = ({ position = [0, 0, 0], words = ["Test"], fontSize = 1 }) => {
           position={position}
           fontWeight={900}
           spacing={spacing}
-          fontSize={fontSize}
-          mousePos={mousePos}>
+          fontSize={fontSize}>
           {word.toUpperCase()}
         </ScrollingText>
       );
     },
-    [groupHeight, fontSize, spacing, mousePos]
+    [groupHeight, fontSize, spacing]
   );
 
   useFrame(() => {

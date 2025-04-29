@@ -7,14 +7,7 @@ import CustomShaderMaterial from "@/global/materials/CustomShaderMaterial";
 import vertexShader from "./shaders/vertexShader.glsl?raw";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";
 
-const ScrollingText = ({
-  position = [0, 0, 0],
-  fontSize = 1,
-  groupHeight,
-  spacing,
-  mousePos,
-  ...props
-}) => {
+const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacing, ...props }) => {
   // Get ScrollerContext data
   const { scrollData, lenis } = useScrollStore();
   const { pingPongTexture } = usePingPongStore();
@@ -46,7 +39,7 @@ const ScrollingText = ({
     []
   );
 
-  useFrame((state, delta) => {
+  useFrame(() => {
     const [scroll3D, range] = calcIntersection(scrollData);
     const isNowIntersecting = scroll3D <= range[0] && scroll3D >= range[1];
 
@@ -65,7 +58,6 @@ const ScrollingText = ({
 
     shaderRef.current.uniforms.uScroll.value = scrollData.current.progress;
     shaderRef.current.uniforms.uVelocity.value = lenis.current.velocity;
-    shaderRef.current.uniforms.uMouse.value.lerp(mousePos.current, 1 - Math.pow(0.0125, delta));
     shaderRef.current.uniforms.uPingPongTexture.value = pingPongTexture.current;
   });
 
