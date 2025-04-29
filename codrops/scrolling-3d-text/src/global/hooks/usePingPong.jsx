@@ -16,9 +16,9 @@ const usePingPong = ({
     }`,
   uniforms = {},
 }) => {
-  const { gl } = useThree();
+  const { gl, viewport } = useThree();
   const bufferScene = useMemo(() => new THREE.Scene(), []);
-  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 2), []);
+  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10), []);
   const buffer = useRef(true);
 
   // Settings for WebGL Renderer
@@ -37,6 +37,7 @@ const usePingPong = ({
         uniforms: {
           uTime: { value: 0 },
           uTexture: { value: null },
+          uResolution: { value: new THREE.Vector2(0, 0) },
           ...uniforms,
         },
         vertexShader,
@@ -61,6 +62,10 @@ const usePingPong = ({
       bufferMesh.material.dispose();
     };
   }, [bufferScene, bufferMaterial, segments]);
+
+  useEffect(() => {
+    bufferMaterial.uniforms.uResolution.value.set(viewport.width, viewport.height);
+  }, [bufferMaterial.uniforms.uResolution.value, viewport]);
 
   useFrame((state, delta) => {
     // Update Uniforms
