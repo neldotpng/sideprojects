@@ -21,6 +21,15 @@ varying vec2 vUv;
 //     return 0.5*( a+b-sqrt(x*x+k*k) );
 // }
 
+float inverseLerp(float v, float minValue, float maxValue) {
+  return (v - minValue) / (maxValue - minValue);
+}
+
+float remap(float v, float inMin, float inMax, float outMin, float outMax) {
+  float t = inverseLerp(v, inMin, inMax);
+  return mix(outMin, outMax, t);
+}
+
 // circular
 float smin( float a, float b, float k )
 {
@@ -69,14 +78,38 @@ float map(vec3 p) {
   return smin(sphere, box, 0.25);
 }
 
+float f(vec3 p) {
+  return sdSphere(p, 0.5);
+}
+
+vec3 calcNormal( in vec3 p ) // for function f(p)
+{
+    float eps = 0.0001; // or some other value
+    vec2 h = vec2(eps,0);
+    return normalize( vec3(f(p+h.xyy) - f(p-h.xyy),
+                           f(p+h.yxy) - f(p-h.yxy),
+                           f(p+h.yyx) - f(p-h.yyx) ) );
+}
+
+vec3 distort(vec3 p) {
+    p.x += 0.2 * sin(1. * p.y + uTime);
+    // p.y += 0.2 * sin(1. * p.z + uTime);
+    // p.z += 0.2 * sin(1. * p.x + uTime);
+    return p;
+}
+
 void main() {
   vec2 mouse = (uMouse * 2. - uResolution) / uResolution;
   vec2 uv = vUv * 2. - 1.;
+  uv.y /= uResolution.x/uResolution.y;
+  mouse.y /= uResolution.x/uResolution.y;
+  mouse *= 2.;
 
   vec3 color = vec3(0.);
 
   // Initialize Raymarching Values
   vec3 ro = vec3(0., 0., -5.);
+  ro.z = -2.;
   vec3 rd = normalize(vec3(uv, 1.));
   float dt = 0.;
 
@@ -89,10 +122,16 @@ void main() {
   // ro.xz *= rot2D(-mouse.x * PI);
   // rd.xz *= rot2D(-mouse.x * PI);
 
+  vec3 p = ro + rd * dt; // Calculate (p)oint on (r)ay
+
   // Raymarch
   for (float i = 0.; i < 80.; i++) {
-    vec3 p = ro + rd * dt; // Calculate (p)oint on (r)ay
+    p = ro + rd * dt;
     float d = map(p); // Run SDF on the calculated (p)oint
+    p.xy -= mouse;
+    p = distort(p);
+    d = sdSphere(p, 0.5);
+    // vec3 normal = calcNormal(p);
 
     dt += d; // Add returned SDF value to (d)istance(t)raveled
 
@@ -101,9 +140,28 @@ void main() {
     if (d < .001 || dt > 100.) break; // Stop if SDF returns small value or dt exceeds a far distance
   }
 
+  vec3 sky = vec3(1.);
+  vec3 ground = vec3(0.0);
+
+  vec3 normal = calcNormal(p);
+  float hemiMix = remap(normal.y, -1., 1., 0., 1.);
+  vec3 hemi = mix(ground, sky, hemiMix);
+
+
+  vec3 lightDir = normalize(vec3(2.5, 2.5, -5.));
+  vec3 lightColor = vec3(0.5);
+  float dp = max(0., dot(lightDir, normal));
+
+  vec3 diffuse = dp * lightColor;
+
+  vec3 light = hemi * 0.0 + diffuse;
+
+
   // Coloring
-  color = 1. - vec3(dt * .15);
-  color *= vec3(vUv, 1.);
+  color = 1. - vec3(dt * .1);
+  color += sin(uTime) * normal;
+  // color = smoothstep(0.4, .41, color);
+  color *= light;
 
   gl_FragColor = vec4(color, 1.);
 }
