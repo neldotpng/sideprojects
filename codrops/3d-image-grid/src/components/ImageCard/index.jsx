@@ -11,6 +11,9 @@ import fragmentShader from "./shaders/fragmentShader.glsl?raw";
 // Dummy Object3D to set instance positions and update matrices
 const dummy = new THREE.Object3D();
 
+/* TODO:
+ * REMOVE STATE UPDATES, SWITCH TO REF UPDATES
+ */
 const ImageCard = ({ imageSize = 25, margins = 25, imageScale = 2, colRows, hoverRadius = 1 }) => {
   // Mouse Position state for uniform
   const [mPos] = useState(new THREE.Vector2());
