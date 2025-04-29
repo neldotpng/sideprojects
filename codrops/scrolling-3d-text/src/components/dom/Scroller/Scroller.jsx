@@ -43,6 +43,7 @@ const Scroller = ({ wrapperRef, lenisRef, sections = [100] }) => {
       smooth: true,
       lerp: 0.1,
       infinite: true,
+      syncTouch: true,
     });
 
     lenisRef.current = lenis;

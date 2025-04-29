@@ -14,17 +14,17 @@ const CustomShaderMaterial = ({
   ref,
   ...props
 }) => {
-  const { size } = useThree();
+  const { viewport } = useThree();
 
   const instanceUniforms = {
     uTime: { value: 0 },
     uMouse: { value: new THREE.Vector2(0, 0) },
-    uResolution: { value: new THREE.Vector2(0, 0) },
+    uResolution: { value: new THREE.Vector2(viewport.width, viewport.height) },
   };
 
   useEffect(() => {
-    ref.current.uniforms.uResolution.value.set(size.width, size.height);
-  }, [size, ref]);
+    ref.current.uniforms.uResolution.value.set(viewport.width, viewport.height);
+  }, [viewport, ref]);
 
   useFrame(({ pointer }, delta) => {
     ref.current.uniforms.uTime.value += delta;

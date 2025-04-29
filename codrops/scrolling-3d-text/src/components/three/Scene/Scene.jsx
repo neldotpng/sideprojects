@@ -1,10 +1,17 @@
-import { useEffect, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 
-import { useScrollStore } from "@/global/Store";
+import { useScrollStore, useMouseStore, usePingPongStore } from "@/global/Store";
+import usePingPong from "@/global/hooks/usePingPong";
+
+import pingPongVertexShader from "./shaders/pingPong/vertexShader.glsl?raw";
+import pingPongFragmentShader from "./shaders/pingPong/fragmentShader.glsl?raw";
+
 import Debug from "@/global/Debug";
-import ScrollingText from "@/components/three/ScrollingText/ScrollingText";
+import TextList from "@/components/three/TextList/TextList";
 import useScroller from "@/global/hooks/useScroller";
+import useMouse from "@/global/hooks/useMouse";
 
 const words = [
   "serendipity",
@@ -40,68 +47,62 @@ const words = [
 ];
 
 const Scene = ({ scrollerRef, lenisRef }) => {
-  const scrollDataRef = useScroller(scrollerRef);
-  const { scrollData, lenis } = useScrollStore();
+  const { viewport } = useThree();
 
-  const spacing = useRef(1.5);
-  const groupHeight = useRef(spacing.current * words.length);
-  const group = useRef();
+  const scrollDataRef = useScroller(scrollerRef);
+  const mousePosRef = useMouse(true);
+
+  const pingPongUniforms = useMemo(
+    () => ({
+      uMouse: {
+        value: new THREE.Vector2(0, 0),
+      },
+    }),
+    []
+  );
+  const [pingPongTextureRef, pingPongMaterial] = usePingPong({
+    vertexShader: pingPongVertexShader,
+    fragmentShader: pingPongFragmentShader,
+    uniforms: pingPongUniforms,
+  });
+
+  // Used to initiate Lenis rAF
+  const { lenis } = useScrollStore();
+  const { mousePos } = useMouseStore();
 
   useEffect(() => {
     useScrollStore.setState({ scrollData: scrollDataRef, lenis: lenisRef });
   }, [scrollDataRef, lenisRef]);
 
-  useFrame((state) => {
-    if (!lenis.current && !scrollData.current) return;
+  useEffect(() => {
+    useMouseStore.setState({ mousePos: mousePosRef });
+  }, [mousePosRef]);
+
+  useEffect(() => {
+    usePingPongStore.setState({ pingPongTexture: pingPongTextureRef });
+  }, [pingPongTextureRef]);
+
+  useFrame((state, delta) => {
+    if (!lenis.current) return;
 
     // Initiate Lenis rAF in R3F
     const timeInMs = state.clock.getElapsedTime() * 1000;
     lenis.current.raf(timeInMs);
 
+    pingPongMaterial.uniforms.uMouse.value.lerp(mousePos.current, 1 - Math.pow(0.0125, delta));
+    // pingPongMaterial.uniforms.uMouse.value.set(mousePos.x, mousePos.y);
     // console.log(scrollData.current.sectionProgress);
-
-    group.current.position.y = groupHeight.current * scrollData.current.sectionProgress;
   });
 
   return (
     <>
       <Debug />
 
-      <group
-        ref={group}
-        position={[0, 0, 0]}>
-        {[words[words.length - 1], words[words.length - 2]].map((word, index) => (
-          <ScrollingText
-            key={index}
-            groupHeight={groupHeight.current}
-            position={[-3.75, index * spacing.current + spacing.current, 0]}
-            fontWeight={900}>
-            {word.toUpperCase()}
-          </ScrollingText>
-        ))}
-        {words.map((word, index) => (
-          <ScrollingText
-            key={index}
-            groupHeight={groupHeight.current}
-            position={[-3.75, index * -spacing.current, 0]}
-            fontWeight={900}>
-            {word.toUpperCase()}
-          </ScrollingText>
-        ))}
-        {words.slice(0, 3).map((word, index) => (
-          <ScrollingText
-            key={index}
-            groupHeight={groupHeight.current}
-            position={[
-              -3.75,
-              index * -spacing.current - (words.length - 1) * spacing.current - spacing.current,
-              0,
-            ]}
-            fontWeight={900}>
-            {word.toUpperCase()}
-          </ScrollingText>
-        ))}
-      </group>
+      <TextList
+        position={[0, 0, 0]}
+        words={words}
+        fontSize={viewport.width / 10}
+      />
     </>
   );
 };

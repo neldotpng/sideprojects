@@ -1,11 +1,24 @@
 import { useEffect, useRef, useMemo, useLayoutEffect } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
+import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
 
-const usePingPong = ({ segments = 2, vertexShader = "", fragmentShader = "", uniforms = {} }) => {
-  const { gl, size } = useThree();
+const usePingPong = ({
+  segments = 2,
+  vertexShader = `
+    void main() {
+      gl_Position = vec4(position, 1.);
+    }`,
+  fragmentShader = `
+    void main() {
+      vec3 color = vec3(0.);
+      gl_FragColor = vec4(color, 1.);
+    }`,
+  uniforms = {},
+}) => {
+  const { gl } = useThree();
   const bufferScene = useMemo(() => new THREE.Scene(), []);
-  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10), []);
+  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 2), []);
   const buffer = useRef(true);
 
   // Settings for WebGL Renderer
@@ -14,25 +27,8 @@ const usePingPong = ({ segments = 2, vertexShader = "", fragmentShader = "", uni
     gl.autoClearColor = false;
   }, [gl]);
 
-  // Ping-Pong RenderTargets, init once on load
-  const [renderTargetA, renderTargetB] = useMemo(() => {
-    const options = {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-      type: THREE.FloatType,
-      depthBuffer: false,
-      stencilBuffer: false,
-    };
-
-    return [new THREE.WebGLRenderTarget(1, 1, options), new THREE.WebGLRenderTarget(1, 1, options)];
-  }, []);
-
-  // Hook to window resize updates, update RenderTarget sizes
-  useLayoutEffect(() => {
-    renderTargetA.setSize(size.width, size.height);
-    renderTargetB.setSize(size.width, size.height);
-  }, [size, renderTargetA, renderTargetB]);
+  const renderTargetA = useFBO({ stencilBuffer: false, depthBuffer: false });
+  const renderTargetB = useFBO({ stencilBuffer: false, depthBuffer: false });
 
   // Material for the bufferMesh
   const bufferMaterial = useMemo(
@@ -50,9 +46,7 @@ const usePingPong = ({ segments = 2, vertexShader = "", fragmentShader = "", uni
   );
 
   // Create Texture
-  const texture = useMemo(() => {
-    return buffer.current ? renderTargetB.texture : renderTargetA.texture;
-  }, [renderTargetA, renderTargetB]);
+  const textureRef = useRef(buffer.current ? renderTargetB.texture : renderTargetA.texture);
 
   // Create bufferMesh and add to scene
   // Remove and dispose when material updates
@@ -85,10 +79,11 @@ const usePingPong = ({ segments = 2, vertexShader = "", fragmentShader = "", uni
 
     // Swap RenderTargets
     buffer.current = !buffer.current;
+    textureRef.current = buffer.current ? renderTargetB.texture : renderTargetA.texture;
   });
 
   // Expose Texture and bufferMaterial for editing
-  return [texture, bufferMaterial];
+  return [textureRef, bufferMaterial];
 };
 
 export default usePingPong;
