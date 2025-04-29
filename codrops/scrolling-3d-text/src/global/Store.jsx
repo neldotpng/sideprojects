@@ -7,7 +7,7 @@ export const useScrollStore = create(() => ({
 }));
 
 export const useMouseStore = create(() => ({
-  mousePos: createRef(),
+  mouseData: createRef(),
 }));
 
 export const usePingPongStore = create(() => ({

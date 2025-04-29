@@ -50,11 +50,14 @@ const Scene = ({ scrollerRef, lenisRef }) => {
   const { viewport } = useThree();
 
   const scrollDataRef = useScroller(scrollerRef);
-  const mousePosRef = useMouse(true);
+  const mouseDataRef = useMouse();
 
   const pingPongUniforms = useMemo(
     () => ({
       uMouse: {
+        value: new THREE.Vector2(0, 0),
+      },
+      uMouseVelocity: {
         value: new THREE.Vector2(0, 0),
       },
     }),
@@ -68,30 +71,32 @@ const Scene = ({ scrollerRef, lenisRef }) => {
 
   // Used to initiate Lenis rAF
   const { lenis } = useScrollStore();
-  const { mousePos } = useMouseStore();
+  const { mouseData } = useMouseStore();
 
   useEffect(() => {
     useScrollStore.setState({ scrollData: scrollDataRef, lenis: lenisRef });
   }, [scrollDataRef, lenisRef]);
 
   useEffect(() => {
-    useMouseStore.setState({ mousePos: mousePosRef });
-  }, [mousePosRef]);
+    useMouseStore.setState({ mouseData: mouseDataRef });
+  }, [mouseDataRef]);
 
   useEffect(() => {
     usePingPongStore.setState({ pingPongTexture: pingPongTextureRef });
   }, [pingPongTextureRef]);
 
-  useFrame((state, delta) => {
+  useFrame((state, dt) => {
     if (!lenis.current) return;
 
     // Initiate Lenis rAF in R3F
     const timeInMs = state.clock.getElapsedTime() * 1000;
     lenis.current.raf(timeInMs);
 
-    pingPongMaterial.uniforms.uMouse.value.lerp(mousePos.current, 1 - Math.pow(0.0125, delta));
-    // pingPongMaterial.uniforms.uMouse.value.set(mousePos.x, mousePos.y);
-    // console.log(scrollData.current.sectionProgress);
+    const { position, velocity } = mouseData.current;
+
+    pingPongMaterial.uniforms.uMouse.value.set(position.x, position.y);
+    // pingPongMaterial.uniforms.uMouseVelocity.value.set(velocity.x, velocity.y);
+    pingPongMaterial.uniforms.uMouseVelocity.value.lerp(velocity, 1 - Math.pow(0.0125, dt));
   });
 
   return (
