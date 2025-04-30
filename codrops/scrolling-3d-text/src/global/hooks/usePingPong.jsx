@@ -18,7 +18,7 @@ const usePingPong = ({
 }) => {
   const { gl, viewport } = useThree();
   const bufferScene = useMemo(() => new THREE.Scene(), []);
-  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10), []);
+  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), []);
   const buffer = useRef(true);
 
   // Settings for WebGL Renderer

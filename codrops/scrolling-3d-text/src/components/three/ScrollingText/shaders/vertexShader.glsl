@@ -45,18 +45,18 @@ float remap(float v, float inMin, float inMax, float outMin, float outMax) {
 // }
 
 void main() {
-  vec4 rawClip = projectionMatrix * modelViewMatrix * vec4(position, 1.);
-  vec2 clipUv = rawClip.xy / rawClip.w * 0.5 + 0.5;
-  vec4 texture = texture2D(uTexture, clipUv);
+  // vec4 rawClip = projectionMatrix * modelViewMatrix * vec4(position, 1.);
+  // vec2 clipUv = rawClip.xy / rawClip.w * 0.5 + 0.5;
+  // vec4 texture = texture2D(uTexture, clipUv);
 
   vec3 newPosition = position;
   newPosition = deformPosition(newPosition, uv, vec2(0., uVelocity * 0.008));
   vec4 worldPosition = projectionMatrix * modelViewMatrix * vec4(newPosition.xyz, 1.0);
 
-  float x = remap(texture.r, -5., 5., -.5, .5);
-  float y = remap(texture.g, -5., 5., -.5, .5);
-  worldPosition.x += x;
-  worldPosition.y += y;
+  // float x = remap(texture.r, -5., 5., -.5, .5);
+  // float y = remap(texture.g, -5., 5., -.5, .5);
+  // worldPosition.x += x;
+  // worldPosition.y += y;
 
   gl_Position = worldPosition;
 

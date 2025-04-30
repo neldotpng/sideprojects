@@ -67,7 +67,7 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacin
       fontSize={fontSize}
       position={position}
       anchorX={0}
-      glyphGeometryDetail={25}
+      glyphGeometryDetail={1}
       {...props}>
       <CustomShaderMaterial
         ref={shaderRef}

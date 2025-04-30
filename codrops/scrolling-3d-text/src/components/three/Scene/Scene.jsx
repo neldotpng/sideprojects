@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
 
 import { useScrollStore, useMouseStore, usePingPongStore } from "@/global/Store";
@@ -12,6 +13,8 @@ import Debug from "@/global/Debug";
 import TextList from "@/components/three/TextList/TextList";
 import useScroller from "@/global/hooks/useScroller";
 import useMouse from "@/global/hooks/useMouse";
+import BufferScene from "@/components/three/BufferScene/BufferScene";
+import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
 
 const words = [
   "serendipity",
@@ -48,30 +51,30 @@ const words = [
 
 const Scene = ({ scrollerRef, lenisRef }) => {
   const { viewport } = useThree();
+  const bufferScene = useFBO();
 
   const scrollDataRef = useScroller(scrollerRef);
   const mouseDataRef = useMouse();
 
   const pingPongUniforms = useMemo(
     () => ({
-      uMouse: {
-        value: new THREE.Vector2(0, 0),
-      },
-      uMouseVelocity: {
-        value: new THREE.Vector2(0, 0),
-      },
+      uMouse: { value: new THREE.Vector2(0, 0) },
+      uMouseVelocity: { value: new THREE.Vector2(0, 0) },
     }),
     []
   );
+
   const [pingPongTextureRef, pingPongMaterial] = usePingPong({
     vertexShader: pingPongVertexShader,
     fragmentShader: pingPongFragmentShader,
     uniforms: pingPongUniforms,
   });
 
+  // Initiate Stores and use Data
   // Used to initiate Lenis rAF
   const { lenis } = useScrollStore();
   const { mouseData } = useMouseStore();
+  const { pingPongTexture } = usePingPongStore();
 
   useEffect(() => {
     useScrollStore.setState({ scrollData: scrollDataRef, lenis: lenisRef });
@@ -95,7 +98,6 @@ const Scene = ({ scrollerRef, lenisRef }) => {
     const { position, velocity } = mouseData.current;
 
     pingPongMaterial.uniforms.uMouse.value.set(position.x, position.y);
-    // pingPongMaterial.uniforms.uMouseVelocity.value.set(velocity.x, velocity.y);
     pingPongMaterial.uniforms.uMouseVelocity.value.lerp(velocity, 1 - Math.pow(0.0125, dt));
   });
 
@@ -103,10 +105,17 @@ const Scene = ({ scrollerRef, lenisRef }) => {
     <>
       <Debug />
 
-      <TextList
-        position={[0, 0, 0]}
-        words={words}
-        fontSize={viewport.width / 10}
+      <BufferScene fbo={bufferScene}>
+        <TextList
+          position={[0, 0, 0]}
+          words={words}
+          fontSize={viewport.width / 10}
+        />
+      </BufferScene>
+
+      <FBOPlane
+        texture={bufferScene.texture}
+        pingPongTexture={pingPongTexture.current}
       />
     </>
   );
