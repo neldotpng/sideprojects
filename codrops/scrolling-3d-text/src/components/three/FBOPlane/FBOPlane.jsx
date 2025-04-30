@@ -5,7 +5,7 @@ import CustomShaderMaterial from "@/global/materials/CustomShaderMaterial";
 import vertexShader from "./shaders/vertexShader.glsl?raw";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";
 
-const FBOPlane = ({ segments = 100, texture, pingPongTexture }) => {
+const FBOPlane = ({ segments = 2, texture, pingPongTextureRef }) => {
   const { viewport } = useThree();
   const plane = useRef();
   const customShaderMaterial = useRef();
@@ -17,7 +17,7 @@ const FBOPlane = ({ segments = 100, texture, pingPongTexture }) => {
 
   useFrame(() => {
     customShaderMaterial.current.uniforms.uTexture.value = texture;
-    customShaderMaterial.current.uniforms.uPingPongTexture.value = pingPongTexture;
+    customShaderMaterial.current.uniforms.uPingPongTexture.value = pingPongTextureRef.current;
   });
 
   return (

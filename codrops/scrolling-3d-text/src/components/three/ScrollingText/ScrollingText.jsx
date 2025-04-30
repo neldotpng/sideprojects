@@ -18,7 +18,7 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacin
 
   const calcIntersection = useCallback(
     (scrollData) => {
-      if (!scrollData.current) return false;
+      if (!scrollData.current) return [0, 0];
 
       const scroll3D = -scrollData.current.progress * groupHeight;
       const range = [position[1] + spacing / 2, position[1] - spacing / 2];
@@ -67,7 +67,7 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacin
       fontSize={fontSize}
       position={position}
       anchorX={0}
-      glyphGeometryDetail={1}
+      glyphGeometryDetail={10}
       {...props}>
       <CustomShaderMaterial
         ref={shaderRef}

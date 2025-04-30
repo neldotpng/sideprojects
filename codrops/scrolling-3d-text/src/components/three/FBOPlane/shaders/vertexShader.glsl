@@ -19,10 +19,10 @@ void main() {
   vec3 newPosition = position;
   vec4 tex = texture2D(uPingPongTexture, uv);
 
-  // float x = remap(tex.r, -5., 5., -0.000005, 0.000005);
-  // float y = remap(tex.g, -5., 5., -0.000005, 0.000005);
-  // newPosition.x += tex.r;
-  // newPosition.y += tex.g;
+  float x = remap(tex.r, -10., 10., -0.25, 0.25);
+  float y = remap(tex.g, -10., 10., -0.25, 0.25);
+  newPosition.x += x;
+  newPosition.y += y;
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
 

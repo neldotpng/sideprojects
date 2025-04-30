@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
@@ -56,18 +56,15 @@ const Scene = ({ scrollerRef, lenisRef }) => {
   const scrollDataRef = useScroller(scrollerRef);
   const mouseDataRef = useMouse();
 
-  const pingPongUniforms = useMemo(
-    () => ({
-      uMouse: { value: new THREE.Vector2(0, 0) },
-      uMouseVelocity: { value: new THREE.Vector2(0, 0) },
-    }),
-    []
-  );
+  const pingPongUniforms = useRef({
+    uMouse: { value: new THREE.Vector2(0, 0) },
+    uMouseVelocity: { value: new THREE.Vector2(0, 0) },
+  });
 
   const [pingPongTextureRef, pingPongMaterial] = usePingPong({
     vertexShader: pingPongVertexShader,
     fragmentShader: pingPongFragmentShader,
-    uniforms: pingPongUniforms,
+    uniforms: pingPongUniforms.current,
   });
 
   // Initiate Stores and use Data
@@ -114,8 +111,9 @@ const Scene = ({ scrollerRef, lenisRef }) => {
       </BufferScene>
 
       <FBOPlane
+        segments={500}
         texture={bufferScene.texture}
-        pingPongTexture={pingPongTexture.current}
+        pingPongTextureRef={pingPongTexture}
       />
     </>
   );

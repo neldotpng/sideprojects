@@ -54,7 +54,7 @@ void main() {
       vUv.x + (clampedVel.x * 0.0005), 
       vUv.y + (clampedVel.y * 0.0005))
   ).rgb;
-  float mixStrength = .25;
+  float mixStrength = .1;
 
   float circ = distance(uv, mouse);
   circ = 1. - smoothstep(.0, .33, circ);
@@ -62,9 +62,10 @@ void main() {
 
   circ = fract(circ * ripples + fract(uTime * .5) * (2. * strength)) * mask;
   circ = smoothstep(0., 1., circ);
-  vec2 dirCirc = vec2(circ) * uMouseVelocity;
+  vec2 dirCirc = vec2(circ) * clampedVel;
 
   color = vec3(dirCirc, 0.);
+  // color = vec3(circ);
 
   // Mix last render with current render colors
   color = mix(

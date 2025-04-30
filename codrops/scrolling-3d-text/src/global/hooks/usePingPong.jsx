@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useLayoutEffect } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
@@ -17,12 +17,17 @@ const usePingPong = ({
   uniforms = {},
 }) => {
   const { gl, viewport } = useThree();
-  const bufferScene = useMemo(() => new THREE.Scene(), []);
-  const bufferCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), []);
+  const bufferScene = useRef();
+  const bufferCamera = useRef();
   const buffer = useRef(true);
+  // const bufferMaterial = useRef();
 
   // Settings for WebGL Renderer
-  useLayoutEffect(() => {
+  // Init Scene and Camera Refs
+  useEffect(() => {
+    bufferScene.current = new THREE.Scene();
+    bufferCamera.current = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
     gl.autoClear = false;
     gl.autoClearColor = false;
   }, [gl]);
@@ -30,7 +35,7 @@ const usePingPong = ({
   const renderTargetA = useFBO({ stencilBuffer: false, depthBuffer: false });
   const renderTargetB = useFBO({ stencilBuffer: false, depthBuffer: false });
 
-  // Material for the bufferMesh
+  // Update bufferMaterial
   const bufferMaterial = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -55,21 +60,21 @@ const usePingPong = ({
     const plane = new THREE.PlaneGeometry(2, 2, segments, segments);
     const bufferMesh = new THREE.Mesh(plane, bufferMaterial);
 
-    bufferScene.add(bufferMesh);
+    bufferScene.current.add(bufferMesh);
     return () => {
-      bufferScene.remove(bufferMesh);
+      bufferScene.current.remove(bufferMesh);
       bufferMesh.geometry.dispose();
       bufferMesh.material.dispose();
     };
-  }, [bufferScene, bufferMaterial, segments]);
+  }, [bufferMaterial, segments]);
 
   useEffect(() => {
     bufferMaterial.uniforms.uResolution.value.set(viewport.width, viewport.height);
-  }, [bufferMaterial.uniforms.uResolution.value, viewport]);
+  }, [bufferMaterial, viewport]);
 
-  useFrame((state, delta) => {
+  useFrame((state, dt) => {
     // Update Uniforms
-    bufferMaterial.uniforms.uTime.value += delta;
+    bufferMaterial.uniforms.uTime.value += dt;
 
     // Ping-Pong Buffering
     const input = buffer.current ? renderTargetA : renderTargetB;
@@ -79,13 +84,13 @@ const usePingPong = ({
     // Update RenderTarget and render to bufferScene
     // Then, update RT to render R3F main scene
     gl.setRenderTarget(output);
-    gl.render(bufferScene, bufferCamera);
+    gl.render(bufferScene.current, bufferCamera.current);
     gl.setRenderTarget(null);
 
     // Swap RenderTargets
     buffer.current = !buffer.current;
     textureRef.current = buffer.current ? renderTargetB.texture : renderTargetA.texture;
-  });
+  }, -2);
 
   // Expose Texture and bufferMaterial for editing
   return [textureRef, bufferMaterial];

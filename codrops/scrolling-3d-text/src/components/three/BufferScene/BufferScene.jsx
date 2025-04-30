@@ -1,21 +1,20 @@
 import { useThree, useFrame, createPortal } from "@react-three/fiber";
-import { useMemo } from "react";
+import { useRef } from "react";
 import * as THREE from "three";
 
 const BufferScene = ({ children, fbo }) => {
   const { gl, camera } = useThree();
-  const bufferScene = useMemo(() => new THREE.Scene(), []);
-
-  const portal = createPortal(children, bufferScene);
+  const bufferScene = useRef(new THREE.Scene());
+  const portal = useRef(createPortal(children, bufferScene.current));
 
   useFrame(() => {
     gl.setRenderTarget(fbo);
     gl.clear();
-    gl.render(bufferScene, camera);
+    gl.render(bufferScene.current, camera);
     gl.setRenderTarget(null);
-  });
+  }, -1);
 
-  return <>{portal}</>;
+  return <>{portal.current}</>;
 };
 
 export default BufferScene;
