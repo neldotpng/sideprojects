@@ -111,7 +111,7 @@ const Scene = ({ scrollerRef, lenisRef }) => {
       </BufferScene>
 
       <FBOPlane
-        segments={500}
+        segments={250}
         texture={bufferScene.texture}
         pingPongTextureRef={pingPongTexture}
       />

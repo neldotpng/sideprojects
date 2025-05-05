@@ -62,10 +62,11 @@ void main() {
 
   circ = fract(circ * ripples + fract(uTime * .5) * (2. * strength)) * mask;
   circ = smoothstep(0., 1., circ);
-  vec2 dirCirc = vec2(circ) * clampedVel;
+  // vec2 dirCirc = vec2(circ) * clampedVel;
+  vec2 dirCirc = vec2(mask) * clampedVel;
 
   color = vec3(dirCirc, 0.);
-  // color = vec3(circ);
+  // color = vec3(mask);
 
   // Mix last render with current render colors
   color = mix(

@@ -50,7 +50,7 @@ void main() {
   // vec4 texture = texture2D(uTexture, clipUv);
 
   vec3 newPosition = position;
-  newPosition = deformPosition(newPosition, uv, vec2(0., uVelocity * 0.008));
+  newPosition = deformPosition(newPosition, uv, vec2(0., uVelocity * 0.01));
   vec4 worldPosition = projectionMatrix * modelViewMatrix * vec4(newPosition.xyz, 1.0);
 
   // float x = remap(texture.r, -5., 5., -.5, .5);
