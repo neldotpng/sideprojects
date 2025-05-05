@@ -66,8 +66,8 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacin
       shaderRef.current.uniforms.uIntersectionStrength.value = 0;
     }
 
-    shaderRef.current.uniforms.uScroll.value = scrollData.current.progress;
-    shaderRef.current.uniforms.uVelocity.value = lenis.current.velocity;
+    shaderRef.current.uniforms.uScroll.value = scrollData.current?.progress;
+    shaderRef.current.uniforms.uVelocity.value = lenis.current?.velocity;
     shaderRef.current.uniforms.uPingPongTexture.value = pingPongTexture.current;
 
     if (isNowIntersecting && lenis.current.velocity === 0) {
