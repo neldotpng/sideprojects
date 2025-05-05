@@ -1,6 +1,7 @@
 import { useRef, useMemo, useCallback } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
+import * as THREE from "three";
 
 import { useScrollStore, usePingPongStore } from "@/global/Store";
 import CustomShaderMaterial from "@/global/materials/CustomShaderMaterial";
@@ -8,6 +9,8 @@ import vertexShader from "./shaders/vertexShader.glsl?raw";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";
 
 const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacing, ...props }) => {
+  const { size } = useThree();
+
   // Get ScrollerContext data
   const { scrollData, lenis } = useScrollStore();
   const { pingPongTexture } = usePingPongStore();
@@ -20,12 +23,15 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacin
     (scrollData) => {
       if (!scrollData.current) return [0, 0];
 
+      const scrollHeight = scrollData.current.sectionInfo[0].height - size.height;
       const scroll3D = -scrollData.current.progress * groupHeight;
-      const range = [position[1] + spacing / 2, position[1] - spacing / 2];
+      const position3D = position[1];
+      const range = [position3D + spacing / 2, position3D - spacing / 2];
+      const scrollToPos = -(position3D / groupHeight) * scrollHeight;
 
-      return [scroll3D, range];
+      return [scroll3D, range, scrollToPos];
     },
-    [groupHeight, position, spacing]
+    [groupHeight, position, spacing, size]
   );
 
   const uniforms = useMemo(
@@ -39,8 +45,12 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacin
     []
   );
 
+  // // How much text fits in the viewport
+  // const textHeight = textRef.current.geometry.boundingBox.max.y * 4;
+  // const totalWordsInView = (viewport.height * 2) / textHeight;
+
   useFrame(() => {
-    const [scroll3D, range] = calcIntersection(scrollData);
+    const [scroll3D, range, scrollToPos] = calcIntersection(scrollData);
     const isNowIntersecting = scroll3D <= range[0] && scroll3D >= range[1];
 
     if (intersecting.current !== isNowIntersecting) {
@@ -59,6 +69,10 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacin
     shaderRef.current.uniforms.uScroll.value = scrollData.current.progress;
     shaderRef.current.uniforms.uVelocity.value = lenis.current.velocity;
     shaderRef.current.uniforms.uPingPongTexture.value = pingPongTexture.current;
+
+    if (isNowIntersecting && lenis.current.velocity === 0) {
+      lenis.current.scrollTo(scrollToPos);
+    }
   });
 
   return (
@@ -67,7 +81,7 @@ const ScrollingText = ({ position = [0, 0, 0], fontSize = 1, groupHeight, spacin
       fontSize={fontSize}
       position={position}
       anchorX={0}
-      glyphGeometryDetail={10}
+      glyphGeometryDetail={1}
       {...props}>
       <CustomShaderMaterial
         ref={shaderRef}
