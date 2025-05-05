@@ -17,17 +17,12 @@ const usePingPong = ({
   uniforms = {},
 }) => {
   const { gl, viewport } = useThree();
-  const bufferScene = useRef();
-  const bufferCamera = useRef();
+  const bufferScene = useRef(new THREE.Scene());
+  const bufferCamera = useRef(new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1));
   const buffer = useRef(true);
-  // const bufferMaterial = useRef();
 
   // Settings for WebGL Renderer
-  // Init Scene and Camera Refs
   useEffect(() => {
-    bufferScene.current = new THREE.Scene();
-    bufferCamera.current = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
     gl.autoClear = false;
     gl.autoClearColor = false;
   }, [gl]);
@@ -57,12 +52,13 @@ const usePingPong = ({
   // Create bufferMesh and add to scene
   // Remove and dispose when material updates
   useEffect(() => {
+    const scene = bufferScene.current;
     const plane = new THREE.PlaneGeometry(2, 2, segments, segments);
     const bufferMesh = new THREE.Mesh(plane, bufferMaterial);
 
-    bufferScene.current.add(bufferMesh);
+    scene.add(bufferMesh);
     return () => {
-      bufferScene.current.remove(bufferMesh);
+      scene.remove(bufferMesh);
       bufferMesh.geometry.dispose();
       bufferMesh.material.dispose();
     };
