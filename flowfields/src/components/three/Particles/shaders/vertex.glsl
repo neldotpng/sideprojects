@@ -306,15 +306,15 @@ void main() {
   flowField = normalize(flowField);
   newPosition.xyz += flowField.xyz;
 
-  float dx = newPosition.x - mouse.x;
-  float dy = newPosition.y - mouse.y;
+  float dx = newPosition.x - mouse.x * 0.1;
+  float dy = newPosition.y - mouse.y * 0.1;
   float dz = newPosition.z - 0.;
 
   float x = cos(0.)*sin(newPosition.x)-sin(0.)*cos(newPosition.x)*cos(dy);
   float y = sin(dy) * cos(newPosition.x);
 
   float c = pow(dx, 2.) + pow(dy, 2.);
-  float r = c;
+  float r = c / 2.5;
   float azimuth = atan(y, x);
   float polar = acos(dz / sqrt(pow(dx, 2.) + pow(dy, 2.) + pow(dz, 2.)));
   vec3 sph = vec3(
@@ -323,7 +323,7 @@ void main() {
     r * cos(polar)
   );
 
-  newPosition.xyz += sph;
+  newPosition.xyz += sph * 0.1;
   
   // Model Position
   vec4 modelPosition = modelMatrix * vec4(newPosition, 1.);
