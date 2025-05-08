@@ -1,4 +1,6 @@
 uniform vec2 uResolution;
+uniform vec3 uRaycastDirection;
+uniform vec3 uRaycastPoint;
 
 varying vec2 vUv;
 varying vec3 vFlow;

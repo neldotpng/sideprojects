@@ -141,9 +141,15 @@ float simplexNoise4d(vec4 v){
 void main() {
   vec3 color = vec3(vUv, 1.);
   vec2 uv = vUv * 2. - 1.;
-  float n = pNoise(uv, 5);
+  float t = uTime * 0.1;
+  float n = pNoise(uv * 1., 5) + 0.25;
   float sn = simplexNoise4d(vec4(vUv.xy, n, uTime * 0.5));
-
-  color = vec3(sn);
+  vec3 noi = vec3(
+    pNoise(vec2(uv.x, t), 5),
+    pNoise(vec2(uv.y, t), 5),
+    pNoise(vec2(t, uv.x), 5)
+  );
+  color = vec3(n);
+  color = noi * n;
   gl_FragColor = vec4(color, 1.);
 }

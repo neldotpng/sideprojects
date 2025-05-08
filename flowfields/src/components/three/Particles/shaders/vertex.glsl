@@ -5,6 +5,9 @@ uniform float uRandomB;
 uniform float uRandomC;
 uniform float uRandomD;
 uniform vec2 uMouse;
+uniform vec3 uCamera;
+uniform vec3 uRaycastDirection;
+uniform vec2 uVelocity;
 
 varying vec2 vUv;
 varying vec3 vFlow;
@@ -287,8 +290,8 @@ void main() {
   vec2 _uv = uv * 2. - 1.;
   float time = uTime * 0.1;
   vec2 mouse = uMouse * uResolution;
-  float aspect = uResolution.x/uResolution.y;
-  mouse.y /= aspect;
+  // float aspect = uResolution.x/uResolution.y;
+  // mouse.y /= aspect;
 
   // Flow Field
   vec3 flowField = vec3(
@@ -297,34 +300,63 @@ void main() {
     cnoise(vec4(newPosition.xyz * 0.55 + 2.0, time))
   );
 
-  // flowField = vec3(
+  // vec3 flowField = vec3(
   //   simplexNoise4d(vec4(newPosition.xyz * 0.15 + 0.0, time)),
   //   simplexNoise4d(vec4(newPosition.xyz * 0.15 + 1.0, time)),
   //   simplexNoise4d(vec4(newPosition.xyz * 0.15 + 2.0, time))
   // );
 
+  // vec3 flowField = vec3(
+  //   pNoise(vec2(newPosition.x * 0.15, time) * 0.15 + 0.0, 5),
+  //   pNoise(vec2(newPosition.y * 0.25, time) * 0.25 + 1.0, 5),
+  //   pNoise(vec2(newPosition.z * 0.35, time) * 0.35 + 2.0, 5)
+  // );
+
   flowField = normalize(flowField);
   newPosition.xyz += flowField.xyz;
 
-  float dx = newPosition.x - mouse.x * 0.1;
-  float dy = newPosition.y - mouse.y * 0.1;
-  float dz = newPosition.z - 0.;
+  // float dx = newPosition.x - mouse.x * 0.1;
+  // float dy = newPosition.y - mouse.y * 0.1;
+  // float dz = newPosition.z - 0.;
 
-  float x = cos(0.)*sin(newPosition.x)-sin(0.)*cos(newPosition.x)*cos(dy);
-  float y = sin(dy) * cos(newPosition.x);
+  // float x = cos(0.)*sin(newPosition.x)-sin(0.)*cos(newPosition.x)*cos(dy);
+  // float y = sin(dy) * cos(newPosition.x);
 
-  float c = pow(dx, 2.) + pow(dy, 2.);
-  float r = c / 2.5;
-  float azimuth = atan(y, x);
-  float polar = acos(dz / sqrt(pow(dx, 2.) + pow(dy, 2.) + pow(dz, 2.)));
-  vec3 sph = vec3(
-    r * sin(polar) * cos(azimuth),
-    r * sin(polar) * sin(azimuth),
-    r * cos(polar)
-  );
+  // float c = pow(dx, 2.) + pow(dy, 2.);
+  // float r = c / 2.5;
+  // float azimuth = atan(y, x);
+  // float polar = acos(dz / sqrt(pow(dx, 2.) + pow(dy, 2.) + pow(dz, 2.)));
+  // vec3 sph = vec3(
+  //   r * sin(polar) * cos(azimuth),
+  //   r * sin(polar) * sin(azimuth),
+  //   r * cos(polar)
+  // );
 
-  newPosition.xyz += sph * 0.1;
-  
+  // newPosition.xyz += sph * 0.1;
+
+  // vec3 dir = uRaycastDirection;
+  // vec3 dp = newPosition - vec3(mouse, 5.) * abs(dir);
+  // float r = pow(dp.x, 2.) + pow(dp.y, 2.);
+  // float rad = max(uResolution.x / r, 1.);
+  // float e = atan(dp.y, dp.x);
+
+  // newPosition.x += rad * cos(e);
+  // newPosition.y += rad * sin(e);
+  vec3 camera = uCamera;
+  vec3 toParticle = newPosition - camera;
+  float projection = dot(toParticle, uRaycastDirection);
+  vec3 closestPoint = camera + uRaycastDirection * projection;
+
+  float dist = length(newPosition - closestPoint);
+  float radius = 2.;
+  dist = min(dist, radius);
+
+  float force = (1.0 - dist / radius);
+  vec3 pushDir = normalize(newPosition - closestPoint);
+  vec3 dirForce = pushDir * force;
+
+  newPosition += dirForce;
+    
   // Model Position
   vec4 modelPosition = modelMatrix * vec4(newPosition, 1.);
 
