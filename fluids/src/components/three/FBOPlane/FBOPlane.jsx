@@ -17,7 +17,7 @@ const FBOPlane = ({ segments = 2, texture, pingPongTextureRef }) => {
 
   useFrame(() => {
     customShaderMaterial.current.uniforms.uTexture.value = texture;
-    customShaderMaterial.current.uniforms.uPingPongTexture.value = pingPongTextureRef.current;
+    customShaderMaterial.current.uniforms.uPingPongTexture.value = pingPongTextureRef?.current;
   });
 
   return (

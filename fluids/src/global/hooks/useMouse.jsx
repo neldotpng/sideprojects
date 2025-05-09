@@ -3,13 +3,12 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Vector2 } from "three";
 
 // Can only be used inside Canvas
-const useMouse = (normalized = true, maxDelta = 0.5) => {
+const useMouse = (normalized = true) => {
   const { size } = useThree();
 
   const halfSizeVector = useRef(new Vector2(size.width, size.height).divideScalar(2));
   const zeroVector = useRef(new Vector2(0, 0));
   const lastPos = useRef(new Vector2());
-  const maxDeltaVector = useRef(new Vector2(maxDelta, maxDelta));
 
   const mouseData = useRef({
     position: new Vector2(0, 0),
@@ -32,9 +31,7 @@ const useMouse = (normalized = true, maxDelta = 0.5) => {
     } else if (!position.equals(nPointer)) {
       position.set(nPointer.x, nPointer.y);
 
-      delta
-        .subVectors(position, lastPos.current)
-        .clamp(maxDeltaVector.current.clone().negate(), maxDeltaVector.current);
+      delta.subVectors(position, lastPos.current);
       velocity
         .set(delta.x, delta.y)
         .divideScalar(dt * 60)

@@ -23,7 +23,7 @@ const ScrollingApp = () => {
       <Scroller
         wrapperRef={scrollerRef}
         lenisRef={lenisRef}
-        sections={[500, 300]}
+        sections={[100]}
       />
     </>
   );

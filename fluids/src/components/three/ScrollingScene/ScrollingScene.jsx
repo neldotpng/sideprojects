@@ -1,46 +1,45 @@
 import { useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useFBO } from "@react-three/drei";
-import * as THREE from "three";
+// import * as THREE from "three";
 
 import Debug from "@/global/Debug";
-import BufferScene from "@/components/three/BufferScene/BufferScene";
+import useLiquidBuffer from "@/global/hooks/useLiquidBuffer/useLiquidBuffer";
 import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
-import pingPongVertexShader from "./shaders/pingPong/pingPongVertexShader.glsl?raw";
-import pingPongFragmentShader from "./shaders/pingPong/pingPongFragmentShader.glsl?raw";
+// import pingPongVertexShader from "./shaders/pingPong/pingPongVertexShader.glsl?raw";
+// import pingPongFragmentShader from "./shaders/pingPong/pingPongFragmentShader.glsl?raw";
 
 import { useScrollStore, useMouseStore, usePingPongStore } from "@/global/Stores";
 import useScroller from "@/global/hooks/useScroller";
 import useMouse from "@/global/hooks/useMouse";
-import usePingPong from "@/global/hooks/usePingPong";
+// import usePingPong from "@/global/hooks/usePingPong";
 
 const ScrollingScene = ({ scrollerRef, lenisRef }) => {
-  const bufferScene = useFBO();
+  const bufferScene = useLiquidBuffer();
   const scrollDataRef = useScroller(scrollerRef);
   const mouseDataRef = useMouse();
 
   // Init Uniforms for PingPong Buffer
-  const pingPongUniforms = useMemo(
-    () => ({
-      uMouse: {
-        value: new THREE.Vector2(0, 0),
-      },
-      uMouseVelocity: {
-        value: new THREE.Vector2(0, 0),
-      },
-    }),
-    []
-  );
-  const [pingPongTextureRef, pingPongMaterial] = usePingPong({
-    vertexShader: pingPongVertexShader,
-    fragmentShader: pingPongFragmentShader,
-    uniforms: pingPongUniforms,
-  });
+  // const pingPongUniforms = useMemo(
+  //   () => ({
+  //     uMouse: {
+  //       value: new THREE.Vector2(0, 0),
+  //     },
+  //     uMouseVelocity: {
+  //       value: new THREE.Vector2(0, 0),
+  //     },
+  //   }),
+  //   []
+  // );
+  // const [pingPongTextureRef, pingPongMaterial] = usePingPong({
+  //   vertexShader: pingPongVertexShader,
+  //   fragmentShader: pingPongFragmentShader,
+  //   uniforms: pingPongUniforms,
+  // });
 
   // Used to initiate Lenis rAF
   const { lenis } = useScrollStore();
-  const { mouseData } = useMouseStore();
-  const { pingPongTexture } = usePingPongStore();
+  // const { mouseData } = useMouseStore();
+  // const { pingPongTexture } = usePingPongStore();
 
   // Init ScrollStore
   useEffect(() => {
@@ -53,9 +52,9 @@ const ScrollingScene = ({ scrollerRef, lenisRef }) => {
   }, [mouseDataRef]);
 
   // Init PingPongStore
-  useEffect(() => {
-    usePingPongStore.setState({ pingPongTexture: pingPongTextureRef });
-  }, [pingPongTextureRef]);
+  // useEffect(() => {
+  //   usePingPongStore.setState({ pingPongTexture: pingPongTextureRef });
+  // }, [pingPongTextureRef]);
 
   useFrame((state, dt) => {
     if (!lenis.current) return;
@@ -64,27 +63,20 @@ const ScrollingScene = ({ scrollerRef, lenisRef }) => {
     const timeInMs = state.clock.getElapsedTime() * 1000;
     lenis.current.raf(timeInMs);
 
-    // Send Mouse values to PingPong Material
-    const { position, velocity } = mouseData.current;
-    pingPongMaterial.uniforms.uMouse.value.set(position.x, position.y);
-    pingPongMaterial.uniforms.uMouseVelocity.value.lerp(velocity, 1 - Math.pow(0.0125, dt));
+    // // Send Mouse values to PingPong Material
+    // const { position, velocity } = mouseData.current;
+    // pingPongMaterial.uniforms.uMouse.value.set(position.x, position.y);
+    // pingPongMaterial.uniforms.uMouseVelocity.value.lerp(velocity, 1 - Math.pow(0.0125, dt));
   });
 
   return (
     <>
       <Debug />
 
-      <BufferScene fbo={bufferScene}>
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry></boxGeometry>
-          <meshBasicMaterial color={"cyan"} />
-        </mesh>
-      </BufferScene>
-
       <FBOPlane
-        segments={250}
+        segments={50}
         texture={bufferScene.texture}
-        pingPongTextureRef={pingPongTexture}
+        // pingPongTextureRef={pingPongTexture}
       />
     </>
   );
