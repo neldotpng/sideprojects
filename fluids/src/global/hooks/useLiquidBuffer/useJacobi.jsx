@@ -6,9 +6,9 @@ import { LinearFilter, FloatType, RGBAFormat, Uniform } from "three";
 import useShaderPass from "./useShaderPass";
 
 import outputVert from "./shaders/output.vert?raw";
-import advectionFrag from "./shaders/advection.frag?raw";
+import jacobiFrag from "./shaders/jacobi.frag?raw";
 
-const useAdvection = ({
+const useJacobi = ({
   cellScale,
   resolution = 256,
   options = {
@@ -21,30 +21,33 @@ const useAdvection = ({
   },
   inTexture,
 }) => {
-  const advection = useFBO(resolution, resolution, options);
+  const jacobi = useFBO(resolution, resolution, options);
+  const jacobiSwap = useFBO(resolution, resolution, options);
 
   const uniforms = useMemo(() => {
     return {
-      uCellScale: new Uniform(cellScale),
-      uVelocity: new Uniform(inTexture),
-      uDeltaTime: new Uniform(0),
-      uDissipation: new Uniform(0.99),
+      uVelocity: new Uniform(inTexture.current),
+      uQuantity: new Uniform(inTexture.current),
+      uAlpha: new Uniform(-cellScale.x * cellScale.x),
+      uBeta: new Uniform(4 + -cellScale.x * cellScale.x),
+      uTest: new Uniform(null),
     };
-  }, [cellScale, inTexture]);
+  }, [inTexture, cellScale]);
 
-  const advectionRef = useShaderPass({
+  const jacobiRef = useShaderPass({
     vertexShader: outputVert,
-    fragmentShader: advectionFrag,
+    fragmentShader: jacobiFrag,
     uniforms,
-    fbo: advection,
+    fbo: jacobi,
+    swapFBO: jacobiSwap,
+    iterations: 20,
   });
 
-  useFrame((state, dt) => {
+  useFrame(() => {
     uniforms.uVelocity.value = inTexture.current;
-    uniforms.uDeltaTime.value = dt;
   });
 
-  return advectionRef;
+  return jacobiRef;
 };
 
-export default useAdvection;
+export default useJacobi;

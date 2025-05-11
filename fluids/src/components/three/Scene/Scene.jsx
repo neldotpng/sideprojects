@@ -1,21 +1,31 @@
-import { Canvas } from "@react-three/fiber";
+import { useEffect } from "react";
 
-import FullscreenShaderPlane from "@/templates/components/FullscreenShaderPlane";
-import DefaultShaderComponent from "@/templates/components/DefaultShaderComponent";
 import Debug from "@/global/Debug";
+import useLiquidBuffer from "@/global/hooks/useLiquidBuffer/useLiquidBuffer";
+import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
+
+import { useMouseStore } from "@/global/Stores";
+import useMouse from "@/global/hooks/useMouse";
+import Test from "./test";
 
 const Scene = () => {
+  const bufferScene = useLiquidBuffer();
+  const mouseDataRef = useMouse();
+
+  // Init MouseStore
+  useEffect(() => {
+    useMouseStore.setState({ mouseData: mouseDataRef });
+  }, [mouseDataRef]);
+
   return (
-    <Canvas>
+    <>
       <Debug />
-      <ambientLight intensity={0.1} />
-      <directionalLight
-        color="red"
-        position={[0, 0, 5]}
+      {/* <Test /> */}
+      <FBOPlane
+        segments={50}
+        texture={bufferScene.current}
       />
-      <FullscreenShaderPlane />
-      <DefaultShaderComponent />
-    </Canvas>
+    </>
   );
 };
 

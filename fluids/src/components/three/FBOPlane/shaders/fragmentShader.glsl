@@ -8,7 +8,6 @@ varying vec2 vUv;
 
 void main() {
   vec4 tex = texture2D(uTexture, vUv);
-  vec4 ppTex = texture2D(uPingPongTexture, vUv);
 
   gl_FragColor = tex;
 }

@@ -1,23 +1,39 @@
 import { useThree, useFrame } from "@react-three/fiber";
-import { useEffect } from "react";
-import * as THREE from "three";
+import { useMemo, useEffect, useRef } from "react";
+import { OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Mesh, Uniform } from "three";
 
-const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1);
+const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1);
 camera.position.z = 1;
-const geometry = new THREE.PlaneGeometry(2, 2);
+const geometry = new PlaneGeometry(2, 2);
 
-const useShaderPass = ({ vertexShader, fragmentShader, uniforms, fbo }) => {
+const useShaderPass = ({
+  vertexShader,
+  fragmentShader,
+  uniforms,
+  fbo,
+  swapFBO,
+  iterations = 1,
+}) => {
   const { gl } = useThree();
+  const scene = useMemo(() => new Scene(), []);
+  const material = useMemo(
+    () =>
+      new ShaderMaterial({
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        uniforms,
+      }),
+    [vertexShader, fragmentShader, uniforms]
+  );
+
+  const shouldSwap = useMemo(() => swapFBO != undefined, [swapFBO]);
+  const buffer = useRef(true);
+  const textureRef = useRef(
+    shouldSwap ? (buffer.current ? fbo.texture : swapFBO.texture) : fbo.texture
+  );
 
   useEffect(() => {
-    const material = new THREE.ShaderMaterial({
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
-      uniforms: uniforms,
-    });
-
-    const mesh = new THREE.Mesh(geometry, material);
+    const mesh = new Mesh(geometry, material);
     scene.add(mesh);
 
     return () => {
@@ -25,15 +41,28 @@ const useShaderPass = ({ vertexShader, fragmentShader, uniforms, fbo }) => {
       mesh.geometry.dispose();
       mesh.material.dispose();
     };
-  });
+  }, [material, scene]);
 
   useFrame(() => {
-    gl.setRenderTarget(fbo);
-    gl.render(scene, camera);
-    gl.setRenderTarget(null);
+    let _fbo = fbo;
+    for (let i = 0; i < iterations; i++) {
+      if (shouldSwap) {
+        _fbo = buffer.current ? fbo : swapFBO;
+        material.uniforms.uQuantity.value = buffer.current ? swapFBO.texture : fbo.texture;
+      }
+
+      gl.setRenderTarget(_fbo);
+      gl.render(scene, camera);
+      gl.setRenderTarget(null);
+
+      if (shouldSwap) {
+        buffer.current = !buffer.current;
+        textureRef.current = buffer.current ? fbo.texture : swapFBO.texture;
+      }
+    }
   });
 
-  return null;
+  return textureRef;
 };
 
 export default useShaderPass;
