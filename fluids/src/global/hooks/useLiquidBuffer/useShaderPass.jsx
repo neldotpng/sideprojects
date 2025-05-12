@@ -1,7 +1,17 @@
 import { useThree, useFrame } from "@react-three/fiber";
 import { useMemo, useEffect, useRef } from "react";
-import { OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Mesh } from "three";
+import {
+  OrthographicCamera,
+  PlaneGeometry,
+  Scene,
+  ShaderMaterial,
+  Mesh,
+  BufferGeometry,
+  BufferAttribute,
+  LineSegments,
+} from "three";
 
+import lineVert from "./shaders/line.vert?raw";
 import outputVert from "./shaders/output.vert?raw";
 
 const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1);
@@ -15,6 +25,7 @@ const useShaderPass = ({
   swapFBO,
   iterations = 1,
   uniformToUpdate = "uVelocity",
+  drawBoundary = false,
 }) => {
   const { gl } = useThree();
   const scene = useMemo(() => new Scene(), []);
@@ -44,6 +55,33 @@ const useShaderPass = ({
       mesh.material.dispose();
     };
   }, [material, scene]);
+
+  useEffect(() => {
+    if (drawBoundary) {
+      const boundaryGeometry = new BufferGeometry();
+      const boundaryVertices = new Float32Array([
+        // left
+        -1, -1, 0, -1, 1, 0,
+
+        // top
+        -1, 1, 0, 1, 1, 0,
+
+        // right
+        1, 1, 0, 1, -1, 0,
+
+        // bottom
+        1, -1, 0, -1, -1, 0,
+      ]);
+      boundaryGeometry.setAttribute("position", new BufferAttribute(boundaryVertices, 3));
+      const boundaryMaterial = new ShaderMaterial({
+        vertexShader: lineVert,
+        fragmentShader: fragmentShader,
+        uniforms,
+      });
+      const line = new LineSegments(boundaryGeometry, boundaryMaterial);
+      scene.add(line);
+    }
+  }, [drawBoundary, fragmentShader, uniforms, scene]);
 
   useFrame(() => {
     let _fbo = fbo;

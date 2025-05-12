@@ -17,27 +17,28 @@ const useAdvection = ({
     type: FloatType,
     format: RGBAFormat,
   },
-  inTexture,
+  inputFBO,
 }) => {
   const advection = useFBO(resolution, resolution, options);
 
   const uniforms = useMemo(() => {
     return {
       uCellScale: new Uniform(cellScale),
-      uVelocity: new Uniform(null),
+      uVelocity: new Uniform(inputFBO.texture),
       uDeltaTime: new Uniform(0),
       uDissipation: new Uniform(0.99),
     };
-  }, [cellScale]);
+  }, [cellScale, inputFBO]);
 
   const advectionRef = useShaderPass({
     fragmentShader: advectionFrag,
     uniforms,
     fbo: advection,
+    drawBoundary: true,
   });
 
   useFrame((state, dt) => {
-    uniforms.uVelocity.value = inTexture;
+    uniforms.uVelocity.value = inputFBO.texture;
     uniforms.uDeltaTime.value = dt;
   });
 

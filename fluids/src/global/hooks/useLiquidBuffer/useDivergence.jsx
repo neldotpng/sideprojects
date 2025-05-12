@@ -4,9 +4,10 @@ import { useFBO } from "@react-three/drei";
 import { LinearFilter, FloatType, RGBAFormat, Uniform } from "three";
 
 import useShaderPass from "./useShaderPass";
-import jacobiFrag from "./shaders/jacobi.frag?raw";
+import divergenceFrag from "./shaders/divergence.frag?raw";
 
-const useJacobi = ({
+const useDivergence = ({
+  cellScale,
   resolution = 256,
   options = {
     stencilBuffer: false,
@@ -17,37 +18,27 @@ const useJacobi = ({
     format: RGBAFormat,
   },
   inputTexture,
-  tempFBO,
-  iterations = 20,
-  alpha,
-  beta,
 }) => {
-  const jacobi = useFBO(resolution, resolution, options);
+  const divergence = useFBO(resolution, resolution, options);
 
   const uniforms = useMemo(() => {
     return {
+      uCellScale: new Uniform(cellScale),
       uVelocity: new Uniform(inputTexture.current),
-      uQuantity: new Uniform(inputTexture.current),
-      uAlpha: new Uniform(alpha),
-      uBeta: new Uniform(beta),
     };
-  }, [inputTexture, alpha, beta]);
+  }, [cellScale, inputTexture]);
 
-  const jacobiRef = useShaderPass({
-    fragmentShader: jacobiFrag,
+  const divergenceRef = useShaderPass({
+    fragmentShader: divergenceFrag,
     uniforms,
-    uniformToUpdate: "uQuantity",
-    fbo: jacobi,
-    swapFBO: tempFBO,
-    iterations: iterations,
+    fbo: divergence,
   });
 
   useFrame(() => {
     uniforms.uVelocity.value = inputTexture.current;
-    // console.log(alpha);
   });
 
-  return jacobiRef;
+  return divergenceRef;
 };
 
-export default useJacobi;
+export default useDivergence;

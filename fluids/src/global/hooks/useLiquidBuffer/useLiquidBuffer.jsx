@@ -8,6 +8,8 @@ import useImpulse from "./useImpulse";
 import useAdvection from "./useAdvection";
 import useJacobi from "./useJacobi";
 import outputFrag from "./shaders/output.frag?raw";
+import useDivergence from "./useDivergence";
+import useGradient from "./useGradient";
 
 const useLiquidBuffer = (
   resolution = 256,
@@ -26,13 +28,44 @@ const useLiquidBuffer = (
   }, [size]);
 
   // Main FBOS
+  const temp = useFBO(resolution, resolution, options);
   const inVel = useFBO(resolution, resolution, options);
   const outVel = useFBO(resolution, resolution, options);
 
   // FBO loop
-  const advectionRef = useAdvection({ cellScale, resolution, options, inTexture: inVel.texture });
-  const jacobiRef = useJacobi({ cellScale, resolution, options, inTexture: advectionRef });
-  const impulseRef = useImpulse({ cellScale, resolution, options, inTexture: jacobiRef });
+  const advectionRef = useAdvection({
+    cellScale,
+    resolution,
+    options,
+    inputFBO: inVel,
+  });
+  // const viscousRef = useJacobi({
+  //   cellScale,
+  //   resolution,
+  //   options,
+  //   inputTexture: advectionRef,
+  //   tempFBO: temp,
+  //   iterations: 20,
+  // });
+  const impulseRef = useImpulse({ cellScale, resolution, options, inputTexture: advectionRef });
+  const divergenceRef = useDivergence({ cellScale, resolution, options, inputTexture: impulseRef });
+  const poissonRef = useJacobi({
+    cellScale,
+    resolution,
+    options,
+    inputTexture: divergenceRef,
+    tempFBO: temp,
+    iterations: 40,
+    alpha: cellScale.clone().multiply(cellScale).negate(),
+    beta: 4,
+  });
+  const gradientRef = useGradient({
+    cellScale,
+    resolution,
+    options,
+    pressureTexture: poissonRef,
+    velocityTexture: impulseRef,
+  });
 
   const uniforms = useMemo(() => {
     return {
@@ -53,7 +86,7 @@ const useLiquidBuffer = (
 
   useFrame((state, dt) => {
     inVel.texture = outputRef.current;
-    uniforms.uTexture.value = impulseRef.current;
+    uniforms.uTexture.value = gradientRef.current;
     uniforms.uTime.value += dt;
   });
 

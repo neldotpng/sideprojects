@@ -10,7 +10,7 @@ varying vec2 vUv;
 void main() {
   vec2 aspect = vec2(1., uCellScale.x / uCellScale.y);
 
-  vec4 velocity = texture2D(uVelocity, vUv);
+  vec2 velocity = texture2D(uVelocity, vUv).xy;
   vec2 _uv = (vUv - 0.5) * 2.0;
   _uv *= aspect;
   
@@ -24,7 +24,7 @@ void main() {
   dist /= scale;
   float d = length(dist);
   d = 1.0 - min(d, 1.0);
-  vec4 impulse = vec4(uDelta * uForce * d, 0., 1.);
+  vec2 impulse = vec2(uDelta * uForce * d);
 
-  gl_FragColor = velocity + impulse;
+  gl_FragColor = vec4(velocity + impulse / uCellScale, 0., 1.);
 }

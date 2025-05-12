@@ -22,7 +22,7 @@ const useImpulse = ({
     type: FloatType,
     format: RGBAFormat,
   },
-  inTexture,
+  inputTexture,
 }) => {
   const { mouseData } = useMouseStore();
   const impulse = useFBO(resolution, resolution, options);
@@ -30,13 +30,13 @@ const useImpulse = ({
   const uniforms = useMemo(() => {
     return {
       uCellScale: new Uniform(cellScale),
-      uVelocity: new Uniform(inTexture.current),
+      uVelocity: new Uniform(inputTexture.current),
       uForce: new Uniform(c_force),
       uSize: new Uniform(c_size),
       uDelta: new Uniform(new Vector2(0, 0)),
       uPosition: new Uniform(new Vector2(0, 0)),
     };
-  }, [cellScale, inTexture]);
+  }, [cellScale, inputTexture]);
 
   const impulseTexture = useShaderPass({
     fragmentShader: impulseFrag,
@@ -46,7 +46,7 @@ const useImpulse = ({
 
   useFrame(() => {
     if (!mouseData.current) return;
-    uniforms.uVelocity.value = inTexture.current;
+    uniforms.uVelocity.value = inputTexture.current;
 
     const { delta, position } = mouseData.current;
 
