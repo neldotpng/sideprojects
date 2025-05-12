@@ -4,8 +4,6 @@ import { useFBO } from "@react-three/drei";
 import { LinearFilter, FloatType, RGBAFormat, Uniform } from "three";
 
 import useShaderPass from "./useShaderPass";
-
-import outputVert from "./shaders/output.vert?raw";
 import advectionFrag from "./shaders/advection.frag?raw";
 
 const useAdvection = ({
@@ -26,21 +24,20 @@ const useAdvection = ({
   const uniforms = useMemo(() => {
     return {
       uCellScale: new Uniform(cellScale),
-      uVelocity: new Uniform(inTexture),
+      uVelocity: new Uniform(null),
       uDeltaTime: new Uniform(0),
       uDissipation: new Uniform(0.99),
     };
-  }, [cellScale, inTexture]);
+  }, [cellScale]);
 
   const advectionRef = useShaderPass({
-    vertexShader: outputVert,
     fragmentShader: advectionFrag,
     uniforms,
     fbo: advection,
   });
 
   useFrame((state, dt) => {
-    uniforms.uVelocity.value = inTexture.current;
+    uniforms.uVelocity.value = inTexture;
     uniforms.uDeltaTime.value = dt;
   });
 

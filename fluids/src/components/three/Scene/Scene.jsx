@@ -6,7 +6,6 @@ import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
 
 import { useMouseStore } from "@/global/Stores";
 import useMouse from "@/global/hooks/useMouse";
-import Test from "./test";
 
 const Scene = () => {
   const bufferScene = useLiquidBuffer();
@@ -20,7 +19,6 @@ const Scene = () => {
   return (
     <>
       <Debug />
-      {/* <Test /> */}
       <FBOPlane
         segments={50}
         texture={bufferScene.current}

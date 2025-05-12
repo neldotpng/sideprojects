@@ -7,8 +7,6 @@ import useShaderPass from "./useShaderPass";
 import useImpulse from "./useImpulse";
 import useAdvection from "./useAdvection";
 import useJacobi from "./useJacobi";
-
-import outputVert from "./shaders/output.vert?raw";
 import outputFrag from "./shaders/output.frag?raw";
 
 const useLiquidBuffer = (
@@ -27,11 +25,14 @@ const useLiquidBuffer = (
     return new Vector2(1 / size.width, 1 / size.height);
   }, [size]);
 
-  // FBOs
-  const impulseRef = useImpulse({ cellScale, resolution, options });
-  const advectionRef = useAdvection({ cellScale, resolution, options, inTexture: impulseRef });
+  // Main FBOS
+  const inVel = useFBO(resolution, resolution, options);
+  const outVel = useFBO(resolution, resolution, options);
+
+  // FBO loop
+  const advectionRef = useAdvection({ cellScale, resolution, options, inTexture: inVel.texture });
   const jacobiRef = useJacobi({ cellScale, resolution, options, inTexture: advectionRef });
-  const output = useFBO(resolution, resolution, options);
+  const impulseRef = useImpulse({ cellScale, resolution, options, inTexture: jacobiRef });
 
   const uniforms = useMemo(() => {
     return {
@@ -45,14 +46,14 @@ const useLiquidBuffer = (
   }, [gl]);
 
   const outputRef = useShaderPass({
-    vertexShader: outputVert,
     fragmentShader: outputFrag,
     uniforms,
-    fbo: output,
+    fbo: outVel,
   });
 
   useFrame((state, dt) => {
-    uniforms.uTexture.value = jacobiRef.current;
+    inVel.texture = outputRef.current;
+    uniforms.uTexture.value = impulseRef.current;
     uniforms.uTime.value += dt;
   });
 

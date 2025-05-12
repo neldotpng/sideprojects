@@ -6,7 +6,6 @@ import { LinearFilter, FloatType, RGBAFormat, Uniform, Vector2 } from "three";
 import { useMouseStore } from "@/global/Stores";
 import useShaderPass from "./useShaderPass";
 
-import impulseVert from "./shaders/impulse.vert?raw";
 import impulseFrag from "./shaders/impulse.frag?raw";
 
 const c_size = 200;
@@ -23,22 +22,23 @@ const useImpulse = ({
     type: FloatType,
     format: RGBAFormat,
   },
+  inTexture,
 }) => {
   const { mouseData } = useMouseStore();
   const impulse = useFBO(resolution, resolution, options);
 
   const uniforms = useMemo(() => {
     return {
-      uDelta: new Uniform(new Vector2(0, 0)),
-      uForce: new Uniform(new Vector2(0, 0)),
-      uCenter: new Uniform(new Vector2(0, 0)),
-      uScale: new Uniform(new Vector2(0, 0)),
       uCellScale: new Uniform(cellScale),
+      uVelocity: new Uniform(inTexture.current),
+      uForce: new Uniform(c_force),
+      uSize: new Uniform(c_size),
+      uDelta: new Uniform(new Vector2(0, 0)),
+      uPosition: new Uniform(new Vector2(0, 0)),
     };
-  }, [cellScale]);
+  }, [cellScale, inTexture]);
 
   const impulseTexture = useShaderPass({
-    vertexShader: impulseVert,
     fragmentShader: impulseFrag,
     uniforms,
     fbo: impulse,
@@ -46,20 +46,12 @@ const useImpulse = ({
 
   useFrame(() => {
     if (!mouseData.current) return;
+    uniforms.uVelocity.value = inTexture.current;
 
     const { delta, position } = mouseData.current;
-    const cursorSize = cellScale.clone().multiplyScalar(c_size);
-
-    const maxX = 1 - cursorSize.x - cellScale.x;
-    const maxY = 1 - cursorSize.y - cellScale.y;
 
     uniforms.uDelta.value.copy(delta);
-    uniforms.uCenter.value.set(
-      Math.min(Math.max(position.x, -maxX), maxX),
-      Math.min(Math.max(position.y, -maxY), maxY)
-    );
-    uniforms.uForce.value.set(delta.x * c_force, delta.y * c_force);
-    uniforms.uScale.value.copy(cursorSize);
+    uniforms.uPosition.value.copy(position);
   });
 
   return impulseTexture;

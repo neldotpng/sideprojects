@@ -1,29 +1,31 @@
 import { useThree, useFrame } from "@react-three/fiber";
 import { useMemo, useEffect, useRef } from "react";
-import { OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Mesh, Uniform } from "three";
+import { OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Mesh } from "three";
+
+import outputVert from "./shaders/output.vert?raw";
 
 const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1);
 camera.position.z = 1;
 const geometry = new PlaneGeometry(2, 2);
 
 const useShaderPass = ({
-  vertexShader,
   fragmentShader,
   uniforms,
   fbo,
   swapFBO,
   iterations = 1,
+  uniformToUpdate = "uVelocity",
 }) => {
   const { gl } = useThree();
   const scene = useMemo(() => new Scene(), []);
   const material = useMemo(
     () =>
       new ShaderMaterial({
-        vertexShader: vertexShader,
+        vertexShader: outputVert,
         fragmentShader: fragmentShader,
         uniforms,
       }),
-    [vertexShader, fragmentShader, uniforms]
+    [fragmentShader, uniforms]
   );
 
   const shouldSwap = useMemo(() => swapFBO != undefined, [swapFBO]);
@@ -48,7 +50,7 @@ const useShaderPass = ({
     for (let i = 0; i < iterations; i++) {
       if (shouldSwap) {
         _fbo = buffer.current ? fbo : swapFBO;
-        material.uniforms.uQuantity.value = buffer.current ? swapFBO.texture : fbo.texture;
+        material.uniforms[uniformToUpdate].value = buffer.current ? swapFBO.texture : fbo.texture;
       }
 
       gl.setRenderTarget(_fbo);

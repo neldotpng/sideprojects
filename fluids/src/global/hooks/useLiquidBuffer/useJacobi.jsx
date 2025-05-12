@@ -4,8 +4,6 @@ import { useFBO } from "@react-three/drei";
 import { LinearFilter, FloatType, RGBAFormat, Uniform } from "three";
 
 import useShaderPass from "./useShaderPass";
-
-import outputVert from "./shaders/output.vert?raw";
 import jacobiFrag from "./shaders/jacobi.frag?raw";
 
 const useJacobi = ({
@@ -29,15 +27,14 @@ const useJacobi = ({
       uVelocity: new Uniform(inTexture.current),
       uQuantity: new Uniform(inTexture.current),
       uAlpha: new Uniform(-cellScale.x * cellScale.x),
-      uBeta: new Uniform(4 + -cellScale.x * cellScale.x),
-      uTest: new Uniform(null),
+      uBeta: new Uniform(4),
     };
   }, [inTexture, cellScale]);
 
   const jacobiRef = useShaderPass({
-    vertexShader: outputVert,
     fragmentShader: jacobiFrag,
     uniforms,
+    uniformToUpdate: "uQuantity",
     fbo: jacobi,
     swapFBO: jacobiSwap,
     iterations: 20,
