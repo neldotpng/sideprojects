@@ -1,3 +1,5 @@
+precision highp float;
+
 uniform sampler2D uVelocity;
 uniform sampler2D uQuantity;
 uniform vec2 uCellScale;
@@ -14,10 +16,8 @@ void main() {
   vec2 xB = texture2D(uQuantity, vUv - vec2(0., uCellScale.y)).xy;
   vec2 xT = texture2D(uQuantity, vUv + vec2(0., uCellScale.y)).xy;
   vec2 bC = texture2D(uVelocity, vUv).xy;
-  // vec2 test = texture2D(uQuantity, vUv).xy;
 
-  color = (xL + xR + xB + xT + -1. * bC) / uBeta;
-  // color = bC;
+  color = (xL + xR + xB + xT - 0.3 * bC) / uBeta;
   
   gl_FragColor = vec4(color, 0., 1.);
 }

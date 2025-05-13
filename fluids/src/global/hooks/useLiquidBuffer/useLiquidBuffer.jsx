@@ -10,6 +10,7 @@ import useJacobi from "./useJacobi";
 import outputFrag from "./shaders/output.frag?raw";
 import useDivergence from "./useDivergence";
 import useGradient from "./useGradient";
+import useBoundary from "./useBoundary";
 
 const useLiquidBuffer = (
   resolution = 256,
@@ -56,7 +57,7 @@ const useLiquidBuffer = (
     inputTexture: divergenceRef,
     tempFBO: temp,
     iterations: 40,
-    alpha: cellScale.clone().multiply(cellScale).negate(),
+    alpha: -(0.25 * 0.25),
     beta: 4,
   });
   const gradientRef = useGradient({
@@ -66,13 +67,20 @@ const useLiquidBuffer = (
     pressureTexture: poissonRef,
     velocityTexture: impulseRef,
   });
+  const boundaryRef = useBoundary({
+    cellScale,
+    resolution,
+    options,
+    inputTexture: gradientRef,
+  });
 
   const uniforms = useMemo(() => {
     return {
       uTexture: new Uniform(null),
       uTime: new Uniform(0),
+      uCellScale: new Uniform(cellScale),
     };
-  }, []);
+  }, [cellScale]);
 
   useEffect(() => {
     gl.setClearColor("#000000");
@@ -86,7 +94,7 @@ const useLiquidBuffer = (
 
   useFrame((state, dt) => {
     inVel.texture = outputRef.current;
-    uniforms.uTexture.value = gradientRef.current;
+    uniforms.uTexture.value = boundaryRef.current;
     uniforms.uTime.value += dt;
   });
 

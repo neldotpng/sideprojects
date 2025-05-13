@@ -27,6 +27,7 @@ const useAdvection = ({
       uVelocity: new Uniform(inputFBO.texture),
       uDeltaTime: new Uniform(0),
       uDissipation: new Uniform(0.99),
+      uGridScale: new Uniform(0.25),
     };
   }, [cellScale, inputFBO]);
 
