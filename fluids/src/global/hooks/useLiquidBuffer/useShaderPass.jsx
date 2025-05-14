@@ -6,13 +6,11 @@ import {
   Scene,
   ShaderMaterial,
   Mesh,
-  BufferGeometry,
-  BufferAttribute,
-  LineSegments,
+  Uniform,
+  Vector2,
 } from "three";
 
-import lineVert from "./shaders/line.vert?raw";
-import outputVert from "./shaders/output.vert?raw";
+import mainVert from "./shaders/main.vert?raw";
 
 const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1);
 camera.position.z = 1;
@@ -25,18 +23,23 @@ const useShaderPass = ({
   swapFBO,
   iterations = 1,
   uniformToUpdate = "uVelocity",
-  drawBoundary = false,
 }) => {
   const { gl } = useThree();
+  const cellScale = useMemo(() => {
+    return new Vector2(1 / fbo.width, 1 / fbo.height);
+  }, [fbo]);
   const scene = useMemo(() => new Scene(), []);
   const material = useMemo(
     () =>
       new ShaderMaterial({
-        vertexShader: outputVert,
+        vertexShader: mainVert,
         fragmentShader: fragmentShader,
-        uniforms,
+        uniforms: {
+          ...uniforms,
+          uCellScale: new Uniform(cellScale),
+        },
       }),
-    [fragmentShader, uniforms]
+    [fragmentShader, uniforms, cellScale]
   );
 
   const shouldSwap = useMemo(() => swapFBO != undefined, [swapFBO]);
@@ -56,49 +59,33 @@ const useShaderPass = ({
     };
   }, [material, scene]);
 
-  useEffect(() => {
-    if (drawBoundary) {
-      const boundaryGeometry = new BufferGeometry();
-      const boundaryVertices = new Float32Array([
-        // left
-        -1, -1, 0, -1, 1, 0,
-
-        // top
-        -1, 1, 0, 1, 1, 0,
-
-        // right
-        1, 1, 0, 1, -1, 0,
-
-        // bottom
-        1, -1, 0, -1, -1, 0,
-      ]);
-      boundaryGeometry.setAttribute("position", new BufferAttribute(boundaryVertices, 3));
-      const boundaryMaterial = new ShaderMaterial({
-        vertexShader: lineVert,
-        fragmentShader: fragmentShader,
-        uniforms,
-      });
-      const line = new LineSegments(boundaryGeometry, boundaryMaterial);
-      scene.add(line);
-    }
-  }, [drawBoundary, fragmentShader, uniforms, scene]);
-
   useFrame(() => {
-    let _fbo = fbo;
-    for (let i = 0; i < iterations; i++) {
-      if (shouldSwap) {
-        _fbo = buffer.current ? fbo : swapFBO;
-        material.uniforms[uniformToUpdate].value = buffer.current ? swapFBO.texture : fbo.texture;
-      }
-
-      gl.setRenderTarget(_fbo);
+    if (!shouldSwap) {
+      gl.setRenderTarget(fbo);
       gl.render(scene, camera);
       gl.setRenderTarget(null);
+    } else {
+      let read = buffer.current ? fbo : swapFBO;
+      let write = buffer.current ? swapFBO : fbo;
 
-      if (shouldSwap) {
-        buffer.current = !buffer.current;
-        textureRef.current = buffer.current ? fbo.texture : swapFBO.texture;
+      for (let i = 0; i < iterations; i++) {
+        // Set input texture for current iteration
+        material.uniforms[uniformToUpdate].value = read.texture;
+
+        // Set render target and render to it
+        gl.setRenderTarget(write);
+        gl.render(scene, camera);
+        gl.setRenderTarget(null);
+
+        // Swap read/write for next iteration
+        const temp = read;
+        read = write;
+        write = temp;
       }
+
+      // After final iteration, update external reference
+      buffer.current = read === fbo;
+      textureRef.current = read.texture;
     }
   });
 

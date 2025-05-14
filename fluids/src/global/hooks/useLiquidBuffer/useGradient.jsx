@@ -1,44 +1,28 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo } from "react";
-import { useFBO } from "@react-three/drei";
-import { LinearFilter, FloatType, RGBAFormat, Uniform } from "three";
+import { Uniform } from "three";
 
 import useShaderPass from "./useShaderPass";
 import gradientFrag from "./shaders/gradient.frag?raw";
 
-const useGradient = ({
-  cellScale,
-  resolution = 256,
-  options = {
-    stencilBuffer: false,
-    depthBuffer: false,
-    minFilter: LinearFilter,
-    magFilter: LinearFilter,
-    type: FloatType,
-    format: RGBAFormat,
-  },
-  pressureTexture,
-  velocityTexture,
-}) => {
-  const gradient = useFBO(resolution, resolution, options);
-
+const useGradient = ({ gridScale, pressureFBO, velocityFBO, outputFBO }) => {
   const uniforms = useMemo(() => {
     return {
-      uCellScale: new Uniform(cellScale),
-      uPressure: new Uniform(pressureTexture.current),
-      uVelocity: new Uniform(velocityTexture.current),
+      uGridScale: new Uniform(gridScale),
+      uPressure: new Uniform(pressureFBO.texture),
+      uVelocity: new Uniform(velocityFBO.texture),
     };
-  }, [cellScale, pressureTexture, velocityTexture]);
+  }, [gridScale, pressureFBO, velocityFBO]);
 
   const gradientRef = useShaderPass({
     fragmentShader: gradientFrag,
     uniforms,
-    fbo: gradient,
+    fbo: outputFBO,
   });
 
   useFrame(() => {
-    uniforms.uPressure.value = pressureTexture.current;
-    uniforms.uVelocity.value = velocityTexture.current;
+    uniforms.uPressure.value = pressureFBO.texture;
+    uniforms.uVelocity.value = velocityFBO.texture;
   });
 
   return gradientRef;

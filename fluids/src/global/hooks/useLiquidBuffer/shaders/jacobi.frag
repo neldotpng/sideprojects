@@ -1,23 +1,27 @@
 precision highp float;
 
-uniform sampler2D uVelocity;
-uniform sampler2D uQuantity;
+uniform sampler2D uX;
+uniform sampler2D uB;
 uniform vec2 uCellScale;
-uniform vec2 uAlpha;
+uniform float uAlpha;
 uniform float uBeta;
 
 varying vec2 vUv;
+varying vec2 pxL;
+varying vec2 pxR;
+varying vec2 pxB;
+varying vec2 pxT;
 
 void main() {
-  vec2 color = vec2(1.);
+ 
+  float xL = texture2D(uX, pxL).r;
+  float xR = texture2D(uX, pxR).r;
+  float xB = texture2D(uX, pxB).r;
+  float xT = texture2D(uX, pxT).r;
+  float bC = texture2D(uB, vUv).r;
 
-  vec2 xL = texture2D(uQuantity, vUv - vec2(uCellScale.x, 0.)).xy;
-  vec2 xR = texture2D(uQuantity, vUv + vec2(uCellScale.x, 0.)).xy;
-  vec2 xB = texture2D(uQuantity, vUv - vec2(0., uCellScale.y)).xy;
-  vec2 xT = texture2D(uQuantity, vUv + vec2(0., uCellScale.y)).xy;
-  vec2 bC = texture2D(uVelocity, vUv).xy;
+  float color = (xL + xR + xB + xT + (uAlpha * bC)) / uBeta;
 
-  color = (xL + xR + xB + xT - 0.3 * bC) / uBeta;
-  
-  gl_FragColor = vec4(color, 0., 1.);
+  gl_FragColor = vec4(color, 0., 0., 1.);
+
 }

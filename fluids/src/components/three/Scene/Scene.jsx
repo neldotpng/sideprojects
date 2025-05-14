@@ -21,7 +21,7 @@ const Scene = () => {
       <Debug />
       <FBOPlane
         segments={50}
-        texture={bufferScene.current}
+        texture={bufferScene.texture}
       />
     </>
   );

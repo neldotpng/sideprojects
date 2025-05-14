@@ -3,18 +3,17 @@ import { useMemo } from "react";
 import { Uniform } from "three";
 
 import useShaderPass from "./useShaderPass";
-import divergenceFrag from "./shaders/divergence.frag?raw";
+import colorFrag from "./shaders/color.frag?raw";
 
-const useDivergence = ({ gridScale, inputFBO, outputFBO }) => {
+const useColor = ({ inputFBO, outputFBO }) => {
   const uniforms = useMemo(() => {
     return {
-      uGridScale: new Uniform(gridScale),
       uVelocity: new Uniform(inputFBO.texture),
     };
-  }, [gridScale, inputFBO]);
+  }, [inputFBO]);
 
-  const divergenceRef = useShaderPass({
-    fragmentShader: divergenceFrag,
+  const boundaryRef = useShaderPass({
+    fragmentShader: colorFrag,
     uniforms,
     fbo: outputFBO,
   });
@@ -23,7 +22,7 @@ const useDivergence = ({ gridScale, inputFBO, outputFBO }) => {
     uniforms.uVelocity.value = inputFBO.texture;
   });
 
-  return divergenceRef;
+  return boundaryRef;
 };
 
-export default useDivergence;
+export default useColor;

@@ -1,50 +1,31 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo } from "react";
-import { useFBO } from "@react-three/drei";
-import { LinearFilter, FloatType, RGBAFormat, Uniform } from "three";
+import { Uniform } from "three";
 
 import useShaderPass from "./useShaderPass";
 import jacobiFrag from "./shaders/jacobi.frag?raw";
 
-const useJacobi = ({
-  resolution = 256,
-  options = {
-    stencilBuffer: false,
-    depthBuffer: false,
-    minFilter: LinearFilter,
-    magFilter: LinearFilter,
-    type: FloatType,
-    format: RGBAFormat,
-  },
-  inputTexture,
-  tempFBO,
-  iterations = 20,
-  alpha,
-  beta,
-}) => {
-  const jacobi = useFBO(resolution, resolution, options);
-
+const useJacobi = ({ inputFBO, outputFBO, tempFBO, iterations = 20, alpha, beta }) => {
   const uniforms = useMemo(() => {
     return {
-      uVelocity: new Uniform(inputTexture.current),
-      uQuantity: new Uniform(inputTexture.current),
+      uX: new Uniform(null),
+      uB: new Uniform(inputFBO.texture),
       uAlpha: new Uniform(alpha),
       uBeta: new Uniform(beta),
     };
-  }, [inputTexture, alpha, beta]);
+  }, [inputFBO, alpha, beta]);
 
   const jacobiRef = useShaderPass({
     fragmentShader: jacobiFrag,
     uniforms,
-    uniformToUpdate: "uQuantity",
-    fbo: jacobi,
+    uniformToUpdate: "uX",
+    fbo: outputFBO,
     swapFBO: tempFBO,
     iterations: iterations,
   });
 
   useFrame(() => {
-    uniforms.uVelocity.value = inputTexture.current;
-    // console.log(alpha);
+    uniforms.uB.value = inputFBO.texture;
   });
 
   return jacobiRef;

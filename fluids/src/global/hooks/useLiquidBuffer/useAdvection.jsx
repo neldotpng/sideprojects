@@ -1,41 +1,25 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo } from "react";
-import { useFBO } from "@react-three/drei";
-import { LinearFilter, FloatType, RGBAFormat, Uniform } from "three";
+import { Uniform } from "three";
 
 import useShaderPass from "./useShaderPass";
 import advectionFrag from "./shaders/advection.frag?raw";
 
-const useAdvection = ({
-  cellScale,
-  resolution = 256,
-  options = {
-    stencilBuffer: false,
-    depthBuffer: false,
-    minFilter: LinearFilter,
-    magFilter: LinearFilter,
-    type: FloatType,
-    format: RGBAFormat,
-  },
-  inputFBO,
-}) => {
-  const advection = useFBO(resolution, resolution, options);
-
+const useAdvection = ({ gridScale, drawBoundaries = true, inputFBO, outputFBO }) => {
   const uniforms = useMemo(() => {
     return {
-      uCellScale: new Uniform(cellScale),
+      uGridScale: new Uniform(gridScale),
       uVelocity: new Uniform(inputFBO.texture),
       uDeltaTime: new Uniform(0),
       uDissipation: new Uniform(0.99),
-      uGridScale: new Uniform(0.25),
     };
-  }, [cellScale, inputFBO]);
+  }, [gridScale, inputFBO]);
 
   const advectionRef = useShaderPass({
     fragmentShader: advectionFrag,
     uniforms,
-    fbo: advection,
-    drawBoundary: true,
+    fbo: outputFBO,
+    drawBoundaries,
   });
 
   useFrame((state, dt) => {

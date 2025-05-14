@@ -1,19 +1,16 @@
-import { useThree, useFrame } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
-import { useEffect, useMemo } from "react";
-import { LinearFilter, FloatType, RGBAFormat, Uniform, Vector2 } from "three";
+import { useMemo } from "react";
+import { LinearFilter, FloatType, RGBAFormat } from "three";
 
-import useShaderPass from "./useShaderPass";
 import useImpulse from "./useImpulse";
 import useAdvection from "./useAdvection";
 import useJacobi from "./useJacobi";
-import outputFrag from "./shaders/output.frag?raw";
 import useDivergence from "./useDivergence";
 import useGradient from "./useGradient";
-import useBoundary from "./useBoundary";
+import useColor from "./useColor";
 
 const useLiquidBuffer = (
-  resolution = 256,
+  resolution = 500,
   options = {
     stencilBuffer: false,
     depthBuffer: false,
@@ -23,82 +20,53 @@ const useLiquidBuffer = (
     format: RGBAFormat,
   }
 ) => {
-  const { gl, size } = useThree();
-  const cellScale = useMemo(() => {
-    return new Vector2(1 / size.width, 1 / size.height);
-  }, [size]);
+  const gridScale = useMemo(() => 0.3, []);
 
   // Main FBOS
+  const velocity = useFBO(resolution, resolution, options);
+  const impulse = useFBO(resolution, resolution, options);
+  const divergence = useFBO(resolution, resolution, options);
+  const pressure = useFBO(resolution, resolution, options);
+  const gradient = useFBO(resolution, resolution, options);
+  const color = useFBO(resolution, resolution, options);
   const temp = useFBO(resolution, resolution, options);
-  const inVel = useFBO(resolution, resolution, options);
-  const outVel = useFBO(resolution, resolution, options);
 
   // FBO loop
-  const advectionRef = useAdvection({
-    cellScale,
-    resolution,
-    options,
-    inputFBO: inVel,
+  useAdvection({
+    gridScale,
+    inputFBO: gradient,
+    outputFBO: velocity,
   });
-  // const viscousRef = useJacobi({
-  //   cellScale,
-  //   resolution,
-  //   options,
-  //   inputTexture: advectionRef,
-  //   tempFBO: temp,
-  //   iterations: 20,
-  // });
-  const impulseRef = useImpulse({ cellScale, resolution, options, inputTexture: advectionRef });
-  const divergenceRef = useDivergence({ cellScale, resolution, options, inputTexture: impulseRef });
-  const poissonRef = useJacobi({
-    cellScale,
-    resolution,
-    options,
-    inputTexture: divergenceRef,
+  useImpulse({
+    gridScale,
+    inputFBO: velocity,
+    outputFBO: impulse,
+  });
+  useDivergence({
+    gridScale,
+    inputFBO: impulse,
+    outputFBO: divergence,
+  });
+  useJacobi({
+    inputFBO: divergence,
+    outputFBO: pressure,
     tempFBO: temp,
-    iterations: 40,
-    alpha: -(0.25 * 0.25),
+    iterations: 20,
+    alpha: -gridScale * gridScale,
     beta: 4,
   });
-  const gradientRef = useGradient({
-    cellScale,
-    resolution,
-    options,
-    pressureTexture: poissonRef,
-    velocityTexture: impulseRef,
+  useGradient({
+    gridScale,
+    pressureFBO: pressure,
+    velocityFBO: impulse,
+    outputFBO: gradient,
   });
-  const boundaryRef = useBoundary({
-    cellScale,
-    resolution,
-    options,
-    inputTexture: gradientRef,
+  useColor({
+    inputFBO: gradient,
+    outputFBO: color,
   });
 
-  const uniforms = useMemo(() => {
-    return {
-      uTexture: new Uniform(null),
-      uTime: new Uniform(0),
-      uCellScale: new Uniform(cellScale),
-    };
-  }, [cellScale]);
-
-  useEffect(() => {
-    gl.setClearColor("#000000");
-  }, [gl]);
-
-  const outputRef = useShaderPass({
-    fragmentShader: outputFrag,
-    uniforms,
-    fbo: outVel,
-  });
-
-  useFrame((state, dt) => {
-    inVel.texture = outputRef.current;
-    uniforms.uTexture.value = boundaryRef.current;
-    uniforms.uTime.value += dt;
-  });
-
-  return outputRef;
+  return color;
 };
 
 export default useLiquidBuffer;
