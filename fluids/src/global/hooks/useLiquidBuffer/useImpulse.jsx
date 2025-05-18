@@ -7,26 +7,22 @@ import useShaderPass from "./useShaderPass";
 
 import impulseFrag from "./shaders/impulse.frag?raw";
 
-const c_size = 100;
-const c_force = 20;
-
-const useImpulse = ({ gridScale, inputFBO, outputFBO }) => {
+const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO }) => {
   const { size } = useThree();
   const { mouseData } = useMouseStore();
 
   const uniforms = useMemo(() => {
     return {
       uResolution: new Uniform(new Vector2(size.width, size.height)),
-      uGridScale: new Uniform(gridScale),
       uVelocity: new Uniform(inputFBO.texture),
-      uForce: new Uniform(c_force),
-      uSize: new Uniform(c_size),
+      uForce: new Uniform(cursorForce),
+      uSize: new Uniform(cursorSize),
       uDelta: new Uniform(new Vector2(0, 0)),
       uPosition: new Uniform(new Vector2(0, 0)),
     };
-  }, [gridScale, inputFBO, size]);
+  }, [cursorSize, cursorForce, inputFBO, size]);
 
-  const impulseTexture = useShaderPass({
+  const impulseTextureRef = useShaderPass({
     fragmentShader: impulseFrag,
     uniforms,
     fbo: outputFBO,
@@ -42,7 +38,7 @@ const useImpulse = ({ gridScale, inputFBO, outputFBO }) => {
     uniforms.uPosition.value.copy(position);
   });
 
-  return impulseTexture;
+  return impulseTextureRef;
 };
 
 export default useImpulse;

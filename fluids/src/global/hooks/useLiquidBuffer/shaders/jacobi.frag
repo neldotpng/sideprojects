@@ -14,14 +14,14 @@ varying vec2 pxT;
 
 void main() {
  
-  float xL = texture2D(uX, pxL).r;
-  float xR = texture2D(uX, pxR).r;
-  float xB = texture2D(uX, pxB).r;
-  float xT = texture2D(uX, pxT).r;
-  float bC = texture2D(uB, vUv).r;
+  vec2 xL = texture2D(uX, pxL).rg;
+  vec2 xR = texture2D(uX, pxR).rg;
+  vec2 xB = texture2D(uX, pxB).rg;
+  vec2 xT = texture2D(uX, pxT).rg;
+  vec2 bC = texture2D(uB, vUv).rg;
 
-  float color = (xL + xR + xB + xT + (uAlpha * bC)) / uBeta;
+  vec2 color = (xL + xR + xB + xT + (uAlpha * bC)) / uBeta;
 
-  gl_FragColor = vec4(color, 0., 0., 1.);
+  gl_FragColor = vec4(color, 0., 1.);
 
 }

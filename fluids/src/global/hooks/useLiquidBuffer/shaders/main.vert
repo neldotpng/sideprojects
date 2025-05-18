@@ -10,8 +10,8 @@ varying vec2 pxT;
 
 void main() {
   vec3 pos = position;
-  vec2 scale = 1. - uCellScale;
-  pos.xy *= scale;
+  // vec2 scale = 1. - uCellScale;
+  // pos.xy *= scale;
 
   gl_Position = vec4(pos.xy, 0., 1.);
 

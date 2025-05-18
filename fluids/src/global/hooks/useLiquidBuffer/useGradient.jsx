@@ -14,7 +14,7 @@ const useGradient = ({ gridScale, pressureFBO, velocityFBO, outputFBO }) => {
     };
   }, [gridScale, pressureFBO, velocityFBO]);
 
-  const gradientRef = useShaderPass({
+  const gradientTextureRef = useShaderPass({
     fragmentShader: gradientFrag,
     uniforms,
     fbo: outputFBO,
@@ -25,7 +25,7 @@ const useGradient = ({ gridScale, pressureFBO, velocityFBO, outputFBO }) => {
     uniforms.uVelocity.value = velocityFBO.texture;
   });
 
-  return gradientRef;
+  return gradientTextureRef;
 };
 
 export default useGradient;

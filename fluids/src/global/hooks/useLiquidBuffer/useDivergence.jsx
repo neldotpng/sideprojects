@@ -13,7 +13,7 @@ const useDivergence = ({ gridScale, inputFBO, outputFBO }) => {
     };
   }, [gridScale, inputFBO]);
 
-  const divergenceRef = useShaderPass({
+  const divergenceTextureRef = useShaderPass({
     fragmentShader: divergenceFrag,
     uniforms,
     fbo: outputFBO,
@@ -23,7 +23,7 @@ const useDivergence = ({ gridScale, inputFBO, outputFBO }) => {
     uniforms.uVelocity.value = inputFBO.texture;
   });
 
-  return divergenceRef;
+  return divergenceTextureRef;
 };
 
 export default useDivergence;

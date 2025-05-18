@@ -12,7 +12,7 @@ const useColor = ({ inputFBO, outputFBO }) => {
     };
   }, [inputFBO]);
 
-  const boundaryRef = useShaderPass({
+  const colorTextureRef = useShaderPass({
     fragmentShader: colorFrag,
     uniforms,
     fbo: outputFBO,
@@ -22,7 +22,7 @@ const useColor = ({ inputFBO, outputFBO }) => {
     uniforms.uVelocity.value = inputFBO.texture;
   });
 
-  return boundaryRef;
+  return colorTextureRef;
 };
 
 export default useColor;
