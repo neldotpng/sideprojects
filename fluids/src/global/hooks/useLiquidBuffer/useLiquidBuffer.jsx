@@ -8,6 +8,8 @@ import useJacobi from "./useJacobi";
 import useDivergence from "./useDivergence";
 import useGradient from "./useGradient";
 import useColor from "./useColor";
+import useVorticity from "./useVorticity";
+import useAddVorticity from "./useAddVorticity";
 
 const useLiquidBuffer = ({
   resolution = 256,
@@ -26,6 +28,7 @@ const useLiquidBuffer = ({
   // Main FBOS
   const velocity = useFBO(resolution, resolution, fboSettings);
   const impulse = useFBO(resolution, resolution, fboSettings);
+  const vorticity = useFBO(resolution, resolution, fboSettings);
   const divergence = useFBO(resolution, resolution, fboSettings);
   const pressure = useFBO(resolution, resolution, fboSettings);
   const gradient = useFBO(resolution, resolution, fboSettings);
@@ -45,35 +48,49 @@ const useLiquidBuffer = ({
     inputFBO: velocity,
     outputFBO: impulse,
   });
-  // // Apply viscous diffusion
-  // // Use jacobi iteration to calculate diffusion
+  // Vorticity
+  useVorticity({
+    strength: 1,
+    inputFBO: impulse,
+    outputFBO: vorticity,
+  });
+  // Add Vorticity
+  useAddVorticity({
+    gridScale,
+    strength: 0.01,
+    vorticityFBO: vorticity,
+    velocityFBO: impulse,
+    outputFBO: velocity,
+  });
+  // Apply viscous diffusion
+  // Use jacobi iteration to calculate diffusion
   useViscous({
     gridScale,
     iterations: diffuse ? iterations : 0,
     viscosity: 0.01,
+    tempFBO: jacobiSwap,
     inputFBO: impulse,
     outputFBO: velocity,
-    tempFBO: jacobiSwap,
   });
   // Calculate divergence from velocity + impulse
   useDivergence({
     gridScale,
-    inputFBO: diffuse ? velocity : impulse,
+    inputFBO: diffuse ? velocity : velocity,
     outputFBO: divergence,
   });
   // Use jacobi iteration to calculate pressure from divergence
   // Iterations = 20 minimum, >size == >accuracy
   useJacobi({
     iterations,
+    tempFBO: jacobiSwap,
     inputFBO: divergence,
     outputFBO: pressure,
-    tempFBO: jacobiSwap,
   });
   // Calculate gradient value of pressure and subtract from velocity
   useGradient({
     gridScale,
     pressureFBO: pressure,
-    velocityFBO: diffuse ? velocity : impulse,
+    velocityFBO: diffuse ? velocity : velocity,
     outputFBO: gradient,
   });
   // Render colors onto final velocity output from gradient

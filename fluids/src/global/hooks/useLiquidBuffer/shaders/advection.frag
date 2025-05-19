@@ -32,7 +32,7 @@ void main() {
   vec4 u1 = texture2D(uVelocity, vUv);
 
   vec2 pos0 = vUv - uDeltaTime * uStep * u1.xy;
-  vec4 u0 = uDissipation * bilerp(uVelocity, pos0);
+  vec4 u0 = uDissipation * texture2D(uVelocity, pos0);
 
   gl_FragColor = u0;
 }
