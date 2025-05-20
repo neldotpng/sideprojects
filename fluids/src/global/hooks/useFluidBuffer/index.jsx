@@ -11,7 +11,7 @@ import useColor from "./useColor";
 import useVorticity from "./useVorticity";
 import useAddVorticity from "./useAddVorticity";
 
-const useLiquidBuffer = ({
+const useFluidBuffer = ({
   resolution = 256,
   gridScale = 0.3,
   iterations = 20,
@@ -101,4 +101,4 @@ const useLiquidBuffer = ({
   return color;
 };
 
-export default useLiquidBuffer;
+export default useFluidBuffer;

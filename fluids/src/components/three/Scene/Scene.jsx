@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 
 import Debug from "@/global/Debug";
-import useLiquidBuffer from "@/global/hooks/useLiquidBuffer";
+import useFluidBuffer from "@/global/hooks/useFluidBuffer";
 import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
 
 import { useMouseStore } from "@/global/Stores";
 import useMouse from "@/global/hooks/useMouse";
 
 const Scene = () => {
-  const bufferScene = useLiquidBuffer();
+  const bufferScene = useFluidBuffer();
   const mouseDataRef = useMouse();
 
   // Init MouseStore
