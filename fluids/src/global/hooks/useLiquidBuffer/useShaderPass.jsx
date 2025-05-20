@@ -37,6 +37,7 @@ const useShaderPass = ({
         uniforms: {
           ...uniforms,
           uCellScale: new Uniform(cellScale),
+          uDeltaTime: new Uniform(0.0167),
         },
       }),
     [fragmentShader, uniforms, cellScale]
@@ -59,7 +60,9 @@ const useShaderPass = ({
     };
   }, [material, scene]);
 
-  useFrame(() => {
+  useFrame((state, dt) => {
+    material.uniforms.uDeltaTime.value = dt;
+
     if (!shouldSwap) {
       gl.setRenderTarget(fbo);
       gl.render(scene, camera);

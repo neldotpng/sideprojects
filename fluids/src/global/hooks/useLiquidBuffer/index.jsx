@@ -15,7 +15,6 @@ const useLiquidBuffer = ({
   resolution = 256,
   gridScale = 0.3,
   iterations = 20,
-  diffuse = false,
   fboSettings = {
     stencilBuffer: false,
     depthBuffer: false,
@@ -42,16 +41,26 @@ const useLiquidBuffer = ({
     inputFBO: gradient,
     outputFBO: velocityA,
   });
+  // Apply viscous diffusion
+  // Use jacobi iteration to calculate diffusion
+  useViscous({
+    gridScale,
+    iterations,
+    viscosity: 50,
+    tempFBO: jacobiSwap,
+    inputFBO: velocityA,
+    outputFBO: velocityB,
+  });
   // Apply external force impulse to base velocity
   useImpulse({
     cursorSize: 100,
-    inputFBO: velocityA,
-    outputFBO: velocityB,
+    inputFBO: velocityB,
+    outputFBO: velocityA,
   });
   // Vorticity
   useVorticity({
     strength: 1,
-    inputFBO: velocityB,
+    inputFBO: velocityA,
     outputFBO: vorticity,
   });
   // Add Vorticity
@@ -59,23 +68,13 @@ const useLiquidBuffer = ({
     gridScale,
     strength: 0.01,
     vorticityFBO: vorticity,
-    velocityFBO: velocityB,
-    outputFBO: velocityA,
-  });
-  // Apply viscous diffusion
-  // Use jacobi iteration to calculate diffusion
-  useViscous({
-    gridScale,
-    iterations: diffuse ? iterations : 0,
-    viscosity: 0.001,
-    tempFBO: jacobiSwap,
-    inputFBO: velocityA,
+    velocityFBO: velocityA,
     outputFBO: velocityB,
   });
   // Calculate divergence from velocity + impulse
   useDivergence({
     gridScale,
-    inputFBO: diffuse ? velocityB : velocityA,
+    inputFBO: velocityB,
     outputFBO: divergence,
   });
   // Use jacobi iteration to calculate pressure from divergence
@@ -90,7 +89,7 @@ const useLiquidBuffer = ({
   useGradient({
     gridScale,
     pressureFBO: pressure,
-    velocityFBO: diffuse ? velocityB : velocityA,
+    velocityFBO: velocityB,
     outputFBO: gradient,
   });
   // Render colors onto final velocity output from gradient
