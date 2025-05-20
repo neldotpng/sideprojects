@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import Debug from "@/global/Debug";
-import useLiquidBuffer from "@/global/hooks/useLiquidBuffer/useLiquidBuffer";
+import useLiquidBuffer from "@/global/hooks/useLiquidBuffer";
 import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
 
 import { useMouseStore } from "@/global/Stores";
