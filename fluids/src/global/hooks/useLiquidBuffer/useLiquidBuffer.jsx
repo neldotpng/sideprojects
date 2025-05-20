@@ -26,8 +26,8 @@ const useLiquidBuffer = ({
   },
 } = {}) => {
   // Main FBOS
-  const velocity = useFBO(resolution, resolution, fboSettings);
-  const impulse = useFBO(resolution, resolution, fboSettings);
+  const velocityA = useFBO(resolution, resolution, fboSettings);
+  const velocityB = useFBO(resolution, resolution, fboSettings);
   const vorticity = useFBO(resolution, resolution, fboSettings);
   const divergence = useFBO(resolution, resolution, fboSettings);
   const pressure = useFBO(resolution, resolution, fboSettings);
@@ -40,18 +40,18 @@ const useLiquidBuffer = ({
   useAdvection({
     step: gridScale,
     inputFBO: gradient,
-    outputFBO: velocity,
+    outputFBO: velocityA,
   });
   // Apply external force impulse to base velocity
   useImpulse({
     cursorSize: 100,
-    inputFBO: velocity,
-    outputFBO: impulse,
+    inputFBO: velocityA,
+    outputFBO: velocityB,
   });
   // Vorticity
   useVorticity({
     strength: 1,
-    inputFBO: impulse,
+    inputFBO: velocityB,
     outputFBO: vorticity,
   });
   // Add Vorticity
@@ -59,23 +59,23 @@ const useLiquidBuffer = ({
     gridScale,
     strength: 0.01,
     vorticityFBO: vorticity,
-    velocityFBO: impulse,
-    outputFBO: velocity,
+    velocityFBO: velocityB,
+    outputFBO: velocityA,
   });
   // Apply viscous diffusion
   // Use jacobi iteration to calculate diffusion
   useViscous({
     gridScale,
     iterations: diffuse ? iterations : 0,
-    viscosity: 0.01,
+    viscosity: 0.001,
     tempFBO: jacobiSwap,
-    inputFBO: impulse,
-    outputFBO: velocity,
+    inputFBO: velocityA,
+    outputFBO: velocityB,
   });
   // Calculate divergence from velocity + impulse
   useDivergence({
     gridScale,
-    inputFBO: diffuse ? velocity : velocity,
+    inputFBO: diffuse ? velocityB : velocityA,
     outputFBO: divergence,
   });
   // Use jacobi iteration to calculate pressure from divergence
@@ -90,7 +90,7 @@ const useLiquidBuffer = ({
   useGradient({
     gridScale,
     pressureFBO: pressure,
-    velocityFBO: diffuse ? velocity : velocity,
+    velocityFBO: diffuse ? velocityB : velocityA,
     outputFBO: gradient,
   });
   // Render colors onto final velocity output from gradient
