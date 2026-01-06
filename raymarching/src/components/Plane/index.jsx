@@ -4,9 +4,12 @@ import fragmentShader from "./shaders/fragmentShader.glsl?raw";
 import { useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 
+import CustomShaderMaterial from "../../global/materials/CustomShaderMaterial";
+
 const Plane = ({ segments = 128 }) => {
   const { viewport, size } = useThree();
   const plane = useRef();
+  const materialRef = useRef();
 
   useEffect(() => {
     plane.current.scale.x = viewport.width;
@@ -15,30 +18,29 @@ const Plane = ({ segments = 128 }) => {
 
   const uniforms = useMemo(
     () => ({
-      uTime: { value: 0 },
-      uResolution: { value: new THREE.Vector2(size.width, size.height) },
-      uMouse: { value: new THREE.Vector2(0, 0) },
+      // uTime: { value: 0 },
+      // uResolution: { value: new THREE.Vector2(size.width, size.height) },
+      // uMouse: { value: new THREE.Vector2(0, 0) },
     }),
-    [size]
+    []
   );
 
-  useFrame(({ clock }) => {
-    uniforms.uTime.value = clock.getElapsedTime();
-  });
+  // useFrame(({ clock }) => {
+  //   uniforms.uTime.value = clock.getElapsedTime();
+  // });
 
-  const onPointerMove = (e) => {
-    uniforms.uMouse.value.set(e.offsetX, size.height - e.offsetY);
-  };
+  // const onPointerMove = (e) => {
+  //   uniforms.uMouse.value.set(e.offsetX, size.height - e.offsetY);
+  // };
 
   return (
-    <mesh
-      ref={plane}
-      onPointerMove={onPointerMove}>
+    <mesh ref={plane}>
       <planeGeometry args={[1, 1, segments, segments]} />
-      <shaderMaterial
+      <CustomShaderMaterial
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         uniforms={uniforms}
+        ref={materialRef}
       />
     </mesh>
   );

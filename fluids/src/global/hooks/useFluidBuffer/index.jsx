@@ -46,7 +46,7 @@ const useFluidBuffer = ({
   useViscous({
     gridScale,
     iterations,
-    viscosity: 50,
+    viscosity: 0.001,
     tempFBO: jacobiSwap,
     inputFBO: velocityA,
     outputFBO: velocityB,

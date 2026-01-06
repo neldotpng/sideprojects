@@ -7,7 +7,7 @@ varying vec3 vFlow;
 varying vec3 vPos;
 
 void main() {
-  vec3 color = vec3(1.);
+  vec3 color = vec3(vUv, 1.);
   color = vFlow;
   gl_FragColor = vec4(color, 0.5);
 }

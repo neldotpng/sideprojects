@@ -369,7 +369,7 @@ void main() {
   gl_PointSize = .1;
   gl_PointSize += 1. / - viewPosition.z;
 
-  vUv = uv;
+  // vUv = uv;
   vFlow = flowField;
   vPos = newPosition;
 }

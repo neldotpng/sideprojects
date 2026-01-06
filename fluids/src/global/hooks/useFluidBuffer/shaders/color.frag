@@ -12,7 +12,7 @@ void main() {
   vec3 color = vec3(velocity, 0.0);
   color = color * 0.5 + 0.5;
   // color = vec3(strength);
-  color = mix(vec3(0.), color, strength);
+  color = mix(vec3(0.5), color, strength);
 
   gl_FragColor = vec4(color, 1.0);
 }
