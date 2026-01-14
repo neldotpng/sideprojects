@@ -1,11 +1,12 @@
 import { Canvas } from "@react-three/fiber";
 import Scene from "@/components/three/Scene/Scene";
-import GestureControls from "./components/gestureControls/GestureControls";
+import useGestureControls from "@/global/hooks/useGestureControls";
 
 const App = () => {
+  useGestureControls();
+
   return (
     <>
-      <GestureControls></GestureControls>
       <div className="canvasContainer">
         <Canvas>
           <Scene />
