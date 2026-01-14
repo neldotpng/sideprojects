@@ -5,7 +5,7 @@ import GestureControls from "./components/gestureControls/GestureControls";
 const App = () => {
   return (
     <>
-      <GestureControls debug></GestureControls>
+      <GestureControls></GestureControls>
       <div className="canvasContainer">
         <Canvas>
           <Scene />

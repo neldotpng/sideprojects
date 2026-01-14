@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GestureRecognizer, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
-import cx from "./GestureControls.module.scss";
+import { useControls } from "leva";
 
 // GestureRecognizer Options
 const options = {
@@ -14,187 +14,231 @@ const options = {
   numHands: 2,
 };
 
-const GestureControls = ({
-  onOpenPalm = () => {},
-  onClosedFist = () => {},
-  onThumbUp = () => {},
-  onThumbDown = () => {},
-  onVictory = () => {},
-  onPointUp = () => {},
-  onNone = () => {},
-  sendHandData = () => {},
-  debug = false,
-}) => {
-  // Gestures Constant
-  // https://ai.google.dev/edge/mediapipe/solutions/vision/gesture_recognizer/web_js#configuration_options
-  const gestures = {
-    Open_Palm: {
-      name: "Open_Palm",
-      fn: onOpenPalm,
-    },
-    Closed_Fist: {
-      name: "Closed_Fist",
-      fn: onClosedFist,
-    },
-    Thumb_Up: {
-      name: "Thumb_Up",
-      fn: onThumbUp,
-    },
-    Thumb_Down: {
-      name: "Thumb_Down",
-      fn: onThumbDown,
-    },
-    Victory: {
-      name: "Victory",
-      fn: onVictory,
-    },
-    Pointing_Up: {
-      name: "Pointing_Up",
-      fn: onPointUp,
-    },
-    None: {
-      name: "None",
-      fn: onNone,
-    },
-  };
+const useGestureControls = () =>
+  //   {
+  //   onOpenPalm = () => {},
+  //   onClosedFist = () => {},
+  //   onThumbUp = () => {},
+  //   onThumbDown = () => {},
+  //   onVictory = () => {},
+  //   onPointUp = () => {},
+  //   onNone = () => {},
+  //   sendHandData = () => {},
+  //   debug = false,
+  // }
+  {
+    const { enableDebug } = useControls({ enableDebug: true });
+    // // Gestures Constant
+    // // https://ai.google.dev/edge/mediapipe/solutions/vision/gesture_recognizer/web_js#configuration_options
+    // const gestures = {
+    //   Open_Palm: {
+    //     name: "Open_Palm",
+    //     fn: onOpenPalm,
+    //   },
+    //   Closed_Fist: {
+    //     name: "Closed_Fist",
+    //     fn: onClosedFist,
+    //   },
+    //   Thumb_Up: {
+    //     name: "Thumb_Up",
+    //     fn: onThumbUp,
+    //   },
+    //   Thumb_Down: {
+    //     name: "Thumb_Down",
+    //     fn: onThumbDown,
+    //   },
+    //   Victory: {
+    //     name: "Victory",
+    //     fn: onVictory,
+    //   },
+    //   Pointing_Up: {
+    //     name: "Pointing_Up",
+    //     fn: onPointUp,
+    //   },
+    //   None: {
+    //     name: "None",
+    //     fn: onNone,
+    //   },
+    // };
 
-  // // State management for each hand's gesture
-  // const [leftGesture, setLeftGesture] = useState(gestures["None"]);
-  // const [rightGesture, setRightGesture] = useState(gestures["None"]);
+    const [streamRunning, setStreamRunning] = useState(false);
 
-  // Debug Info State ** MAYBE REMOVE **
-  // const [debugInfo, setDebugInfo] = useState({});
+    // // State management for each hand's gesture
+    // const [leftGesture, setLeftGesture] = useState(gestures["None"]);
+    // const [rightGesture, setRightGesture] = useState(gestures["None"]);
 
-  // Webcam Stream Ref
-  const video = useRef();
+    // Debug Info State ** MAYBE REMOVE **
+    // const [debugInfo, setDebugInfo] = useState({});
 
-  // Debug Canvas Refs
-  const canvas = useRef();
-  const ctx = useRef();
-  const drawingUtils = useRef();
+    // Webcam Stream Ref
+    const video = useRef(window.document.createElement("video"));
 
-  const gestureRecognizer = useRef();
-  const lastVideoTime = useRef(-1);
+    // Debug Canvas Refs
+    const canvas = useRef(window.document.createElement("canvas"));
+    const ctx = useRef(canvas.current.getContext("2d"));
+    const drawingUtils = useRef();
 
-  // Resize Function
-  const onResize = () => {
-    // Set Canvas dimensions
-    canvas.current.style.width = video.current.offsetWidth;
-    canvas.current.style.height = video.current.offsetHeight;
-    canvas.current.width = video.current.offsetWidth;
-    canvas.current.height = video.current.offsetHeight;
-  };
+    const gestureRecognizer = useRef();
+    const lastVideoTime = useRef(-1);
 
-  // Run createGestureRecognizer
-  useEffect(() => {
-    // Load and create GestureRecognizing Task Model
-    const createGestureRecognizer = async () => {
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
-      );
-
-      gestureRecognizer.current = await GestureRecognizer.createFromOptions(vision, options);
+    // Resize Function
+    const onResize = () => {
+      // Set Canvas dimensions
+      canvas.current.style.width = window.innerWidth;
+      canvas.current.style.height = window.innerHeight;
+      canvas.current.width = window.innerWidth;
+      canvas.current.height = window.innerHeight;
     };
 
-    createGestureRecognizer();
-  }, []);
+    // Run createGestureRecognizer
+    useEffect(() => {
+      // Load and create GestureRecognizing Task Model
+      const createGestureRecognizer = async () => {
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+        );
 
-  const predictWebcam = useCallback(() => {
-    if (!gestureRecognizer.current) {
-      window.requestAnimationFrame(predictWebcam);
-      return;
-    }
+        gestureRecognizer.current = await GestureRecognizer.createFromOptions(vision, options);
+      };
 
-    // Update video stream by time
-    let startTimeMs = performance.now();
-    let results;
-    if (lastVideoTime !== video.current.currentTime) {
-      console.log(gestureRecognizer.current);
-      results = gestureRecognizer.current?.recognizeForVideo(video.current, startTimeMs);
-      lastVideoTime.current = video.current.currentTime;
-    }
+      createGestureRecognizer();
+    }, []);
 
-    // if Debug Mode enabled clear canvas when hands not in frame
-    if (debug) ctx.current.clearRect(0, 0, canvas.current.width, canvas.current.height);
+    const calcAverageLandmarkPos = (arr, objKey) => {
+      const avg = Math.abs(arr.reduce((acc, cur) => acc + cur[objKey], 0) / arr.length);
+      return Math.max(1 - avg, 0);
+    };
 
-    // Loop through landmarks to get approximate hand position in the window
-    if (results.landmarks) {
-      results.landmarks.forEach((landmarks) => {
-        // If Debug Mode enabled draw wireframes for hand tracking
-        if (debug) {
-          // Draw Connecting lines between landmarks
-          drawingUtils.current.drawConnectors(landmarks, GestureRecognizer.HAND_CONNECTIONS, {
-            color: "#ff00ff",
-            lineWidth: 5,
-          });
-          // Draw landmarks
-          // https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker#models
-          drawingUtils.current.drawLandmarks(landmarks, {
-            color: "#ffff00",
-            lineWidth: 2,
+    const predictWebcam = useCallback(() => {
+      if (!gestureRecognizer.current || !video.current) {
+        return;
+      }
+
+      // Update video stream by time
+      let startTimeMs = performance.now(),
+        results,
+        x,
+        y;
+      if (lastVideoTime !== video.current.currentTime) {
+        results = gestureRecognizer.current.recognizeForVideo(video.current, startTimeMs);
+        lastVideoTime.current = video.current.currentTime;
+      }
+
+      if (enableDebug) {
+        // if Debug Mode enabled clear canvas when hands not in frame
+        ctx.current.clearRect(0, 0, canvas.current.width, canvas.current.height);
+
+        if (results.landmarks) {
+          // Loop through landmarks to get approximate hand position in the window
+          results.landmarks.forEach((landmarks, index) => {
+            x = calcAverageLandmarkPos(landmarks, "x");
+            y = calcAverageLandmarkPos(landmarks, "y");
+
+            // If Debug Mode enabled draw wireframes for hand tracking
+            if (drawingUtils.current) {
+              // Draw Connecting lines between landmarks
+              drawingUtils.current.drawConnectors(landmarks, GestureRecognizer.HAND_CONNECTIONS, {
+                color: "#00c8ff",
+                lineWidth: 5,
+              });
+              // Draw landmarks
+              // https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker#models
+              drawingUtils.current.drawLandmarks(
+                [landmarks[4], landmarks[8], landmarks[12], landmarks[16], landmarks[20]],
+                {
+                  color: `rgba(255, 153, 0, 1)`,
+                  lineWidth: 2,
+                }
+              );
+            }
           });
         }
-      });
-    }
+      }
 
-    // // Only send data if a hand is visible
-    // if (results.landmarks.length && results.gestures.length) {
-    //   console.log("test");
-    //   onHandMove({ handedness, gestureName, pos: [x, y, z] });
-    // }
+      // // Only send data if a hand is visible
+      // if (results.landmarks.length && results.gestures.length) {
+      //   console.log("test");
+      //   onHandMove({ handedness, gestureName, pos: [x, y, z] });
+      // }
+    }, [enableDebug]);
 
-    window.requestAnimationFrame(predictWebcam);
-  }, [debug]);
+    const startStream = useCallback(() => {
+      if (streamRunning) return;
 
-  const startStream = useCallback(() => {
-    const constraints = {
-      video: true,
-      facingMode: "user",
-    };
+      const constraints = {
+        video: true,
+        facingMode: "user",
+      };
 
-    // Start video stream via camera and
-    // Start predictWebcam once stream loaded
-    navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-      video.current.srcObject = stream;
-      video.current.addEventListener("loadeddata", () => {
-        if (debug) {
-          ctx.current = canvas.current.getContext("2d");
+      // Start video stream via camera and
+      // Start predictWebcam once stream loaded
+      navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+        video.current.srcObject = stream;
+        video.current.addEventListener("loadeddata", () => {
+          // Wait for Video to load then set up debug context
           drawingUtils.current = new DrawingUtils(ctx.current);
           onResize();
-        }
-        predictWebcam();
+          setStreamRunning(true);
+        });
       });
-    });
-  }, [debug, predictWebcam]);
+    }, [streamRunning]);
 
-  useEffect(() => {
-    window.addEventListener("click", startStream);
+    useEffect(() => {
+      const videoEl = video.current;
+      const canvasEl = canvas.current;
+      const root = document.querySelector("#root");
 
-    return () => window.removeEventListener("click", startStream);
-  }, [startStream]);
+      // VIDEO ATTRIBUTES
+      videoEl.playsInline = true;
+      videoEl.autoplay = true;
+      videoEl.style.visibility = "hidden";
+      videoEl.style.position = "absolute";
+      videoEl.style.left = "-9999px";
+      root.appendChild(videoEl);
 
-  // // Send Hand Data to parent via sendHandData
-  // const onHandMove = (data = { handedness: null, gestureName: "None", pos: [0, 0, 0] }) => {
-  //   sendHandData(data);
-  // };
+      // DEBUG CANVAS ATTRIBUTES
+      if (enableDebug) {
+        canvasEl.style.width = window.innerWidth;
+        canvasEl.style.height = window.innerHeight;
+        canvasEl.style.transform = "rotateY(180deg)";
+        canvasEl.style.position = "fixed";
+        canvasEl.style.top = 0;
+        canvasEl.style.left = 0;
+        canvasEl.style.pointerEvents = "none";
+        canvasEl.width = window.innerWidth;
+        canvasEl.height = window.innerHeight;
+        root.appendChild(canvasEl);
+      }
 
-  return (
-    <div className={cx.controls}>
-      <video
-        autoPlay
-        playsInline
-        id="webcam"
-        className={cx.webcam}
-        ref={video}
-      />
-      {debug && (
-        <canvas
-          className={cx.canvas}
-          ref={canvas}
-        />
-      )}
-    </div>
-  );
-};
+      let rafID;
+      const startPrediction = () => {
+        predictWebcam();
+        rafID = requestAnimationFrame(startPrediction);
+      };
 
-export default GestureControls;
+      if (streamRunning) {
+        startPrediction();
+      }
+
+      return () => {
+        cancelAnimationFrame(rafID);
+        root.removeChild(videoEl);
+        if (enableDebug) root.removeChild(canvasEl);
+      };
+    }, [enableDebug, predictWebcam, streamRunning]);
+
+    useEffect(() => {
+      window.addEventListener("click", startStream);
+
+      return () => window.removeEventListener("click", startStream);
+    }, [startStream]);
+
+    // // Send Hand Data to parent via sendHandData
+    // const onHandMove = (data = { handedness: null, gestureName: "None", pos: [0, 0, 0] }) => {
+    //   sendHandData(data);
+    // };
+
+    return;
+  };
+
+export default useGestureControls;
