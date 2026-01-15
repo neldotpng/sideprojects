@@ -1,25 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GestureRecognizer, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { DrawingUtils } from "@mediapipe/tasks-vision";
 import { useControls } from "leva";
 import { Vector2 } from "three";
 import { useFrame } from "@react-three/fiber";
 
-const useGestureControls = (numHands = 2) => {
-  // GestureRecognizer Options
-  const options = useMemo(
-    () => ({
-      baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/gesture_recognizer.task",
-        delegate: "GPU",
-      },
-      runningMode: "VIDEO",
-      // Max Number of Hands to Track
-      numHands: numHands,
-    }),
-    [numHands]
-  );
+// Web Worker Init
+const worker = window.Worker
+  ? new Worker(new URL("./gesture.worker.js", import.meta.url))
+  : console.error("Your browser does not support WebWorkers.");
 
+const useGestureControls = (numHands = 2) => {
   // Leva Controls for Debug
   const { enableDebug } = useControls({ enableDebug: true });
 
@@ -35,8 +25,8 @@ const useGestureControls = (numHands = 2) => {
   const ctx = useRef(canvas.current.getContext("2d"));
   const drawingUtils = useRef(new DrawingUtils(ctx.current));
 
-  // GestureRecognition Task
-  const gestureRecognizer = useRef();
+  // GestureRecognition Task Results
+  const _results = useRef();
 
   // Velocity Management Ref
   const gestureControlsData = useRef(
@@ -48,20 +38,6 @@ const useGestureControls = (numHands = 2) => {
       }))
     )
   );
-
-  // Run createGestureRecognizer
-  useEffect(() => {
-    // Load and create GestureRecognizing Task Model
-    const createGestureRecognizer = async () => {
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
-      );
-
-      gestureRecognizer.current = await GestureRecognizer.createFromOptions(vision, options);
-    };
-
-    createGestureRecognizer();
-  }, [options]);
 
   // Setup HTML Element Attributes on mount
   useEffect(() => {
@@ -102,13 +78,11 @@ const useGestureControls = (numHands = 2) => {
   }, []);
 
   const predictWebcam = useCallback(() => {
-    if (!gestureRecognizer.current || !video.current) {
+    const results = _results.current;
+
+    if (!results) {
       return;
     }
-
-    // Update video stream by time
-    const results = gestureRecognizer.current.recognizeForVideo(video.current, performance.now());
-
     // if Debug Mode enabled clear canvas when hands not in frame
     if (enableDebug) {
       ctx.current.clearRect(0, 0, canvas.current.width, canvas.current.height);
@@ -156,6 +130,18 @@ const useGestureControls = (numHands = 2) => {
     }
   }, [enableDebug, drawLandmarks]);
 
+  const onFrame = useCallback((now, metadata) => {
+    createImageBitmap(video.current).then((bitmap) => {
+      worker.postMessage(
+        { type: "frame", bitmap, timestamp: metadata.mediaTime },
+        [bitmap] // transfer ownership
+      );
+    });
+
+    // Start Loop
+    video.current.requestVideoFrameCallback(onFrame);
+  }, []);
+
   const startStream = useCallback(() => {
     if (streamInit) return;
 
@@ -170,11 +156,16 @@ const useGestureControls = (numHands = 2) => {
       video.current.srcObject = stream;
       video.current.addEventListener("loadeddata", () => {
         setStreamRunning(true);
+
+        video.current.requestVideoFrameCallback(onFrame);
+        worker.onmessage = (e) => {
+          _results.current = e.data.result;
+        };
       });
     });
 
     setStreamInit(true);
-  }, [streamInit]);
+  }, [streamInit, onFrame]);
 
   useEffect(() => {
     const canvasEl = canvas.current;
