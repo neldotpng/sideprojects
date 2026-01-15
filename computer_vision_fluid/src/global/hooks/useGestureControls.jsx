@@ -1,23 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GestureRecognizer, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 import { useControls } from "leva";
+import { Vector2 } from "three";
 
-// GestureRecognizer Options
-const options = {
-  baseOptions: {
-    modelAssetPath:
-      "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/gesture_recognizer.task",
-    delegate: "GPU",
-  },
-  runningMode: "VIDEO",
-  // Max Number of Hands to Track
-  numHands: 2,
-};
+const useGestureControls = (numHands = 2) => {
+  // GestureRecognizer Options
+  const options = useMemo(
+    () => ({
+      baseOptions: {
+        modelAssetPath:
+          "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/gesture_recognizer.task",
+        delegate: "GPU",
+      },
+      runningMode: "VIDEO",
+      // Max Number of Hands to Track
+      numHands: numHands,
+    }),
+    [numHands]
+  );
 
-const useGestureControls = () => {
+  // Leva Controls for Debug
   const { enableDebug } = useControls({ enableDebug: true });
 
+  // State Management for Video Stream
   const [streamRunning, setStreamRunning] = useState(false);
+  const [streamInit, setStreamInit] = useState(false);
 
   // Webcam Stream Ref
   const video = useRef(window.document.createElement("video"));
@@ -27,31 +34,19 @@ const useGestureControls = () => {
   const ctx = useRef(canvas.current.getContext("2d"));
   const drawingUtils = useRef(new DrawingUtils(ctx.current));
 
+  // GestureRecognition Task
   const gestureRecognizer = useRef();
 
-  // Debug Function
-  // Draws landmarks to canvas
-  const drawLandmarks = useCallback((hands) => {
-    // Loop through landmarks to get approximate hand position in the window
-    hands.forEach((handLandmarks) => {
-      const fingertips = [
-        handLandmarks[4], // Thumb
-        handLandmarks[8], // Index
-        handLandmarks[12], // Middle
-        handLandmarks[16], // Ring
-        handLandmarks[20], // Pinky
-      ];
-
-      // If Debug Mode enabled draw wireframes for hand tracking
-      if (drawingUtils.current) {
-        // https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker#models
-        drawingUtils.current.drawLandmarks(fingertips, {
-          color: `rgba(255, 153, 0, 1)`,
-          lineWidth: 2,
-        });
-      }
-    });
-  }, []);
+  // Velocity Management Ref
+  const gestureControlsData = useRef(
+    [...Array(numHands)].map(() =>
+      [...Array(5)].map(() => ({
+        lastPosition: new Vector2(),
+        position: new Vector2(),
+        delta: new Vector2(),
+      }))
+    )
+  );
 
   // Run createGestureRecognizer
   useEffect(() => {
@@ -65,6 +60,50 @@ const useGestureControls = () => {
     };
 
     createGestureRecognizer();
+  }, [options]);
+
+  // Setup HTML Element Attributes on mount
+  useEffect(() => {
+    const videoEl = video.current;
+    const canvasEl = canvas.current;
+    const { innerWidth, innerHeight } = window;
+
+    // VIDEO ATTRIBUTES
+    videoEl.playsInline = true;
+    videoEl.autoplay = true;
+    videoEl.style.cssText = `
+      visibility: hidden;
+      position: absolute;
+      left: -9999px;
+      height: 360px;
+    `;
+
+    // CANVAS ATTRIBUTES
+    // TOFIX: HANDLE CANVAS RESIZE
+    canvasEl.width = innerWidth;
+    canvasEl.height = innerHeight;
+    canvasEl.style.cssText = `
+      width: ${innerWidth}px;
+      height: ${innerHeight}px;
+      transform: rotateY(180deg);
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    `;
+  }, []);
+
+  // Debug Function
+  // Draws landmarks to canvas
+  const drawLandmarks = useCallback((landmarks) => {
+    // If Debug Mode enabled draw wireframes for hand tracking
+    if (drawingUtils.current) {
+      // https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker#models
+      drawingUtils.current.drawLandmarks(landmarks, {
+        color: `rgba(255, 153, 0, 1)`,
+        lineWidth: 2,
+      });
+    }
   }, []);
 
   const predictWebcam = useCallback(() => {
@@ -75,19 +114,55 @@ const useGestureControls = () => {
     // Update video stream by time
     const results = gestureRecognizer.current.recognizeForVideo(video.current, performance.now());
 
+    // if Debug Mode enabled clear canvas when hands not in frame
     if (enableDebug) {
-      // if Debug Mode enabled clear canvas when hands not in frame
       ctx.current.clearRect(0, 0, canvas.current.width, canvas.current.height);
+    }
 
-      // If hands are in frame, draw landmarks to canvas
-      if (results) {
-        drawLandmarks(results.landmarks);
-      }
+    // if hands recognized, pass landmarks to fingertips array
+    if (results && results.landmarks.length > 0) {
+      // Loop through landmarks to get approximate hand position in the window
+      results.landmarks.forEach((handLandmarks, i) => {
+        const fingers = [
+          // handLandmarks[4], // Thumb = 0
+          handLandmarks[8], // Index = 1
+          // handLandmarks[12], // Middle = 2
+          // handLandmarks[16], // Ring = 3
+          // handLandmarks[20], // Pinky = 4
+        ];
+
+        fingers.forEach((landmark, j) => {
+          const fingerData = gestureControlsData.current[i][j];
+
+          fingerData.position
+            .set(landmark.x, landmark.y)
+            .subScalar(0.5)
+            .multiplyScalar(-2)
+            .clampScalar(-1, 1);
+          fingerData.delta
+            .subVectors(fingerData.position, fingerData.lastPosition)
+            .clampScalar(-1, 1);
+
+          fingerData.lastPosition.copy(fingerData.position);
+        });
+
+        if (enableDebug) {
+          // If hands are in frame, draw landmarks to canvas
+          drawLandmarks(fingers);
+        }
+      });
+    } else {
+      gestureControlsData.current.forEach((hand) => {
+        hand.forEach((finger) => {
+          finger.position.set(0, 0);
+          finger.delta.set(0, 0);
+        });
+      });
     }
   }, [enableDebug, drawLandmarks]);
 
   const startStream = useCallback(() => {
-    if (streamRunning) return;
+    if (streamInit) return;
 
     const constraints = {
       video: true,
@@ -102,51 +177,36 @@ const useGestureControls = () => {
         setStreamRunning(true);
       });
     });
-  }, [streamRunning]);
+
+    setStreamInit(true);
+  }, [streamInit]);
 
   useEffect(() => {
+    let rafID;
     const videoEl = video.current;
     const canvasEl = canvas.current;
     const root = document.querySelector("#root");
 
-    // VIDEO ATTRIBUTES
-    videoEl.playsInline = true;
-    videoEl.autoplay = true;
-    videoEl.style.visibility = "hidden";
-    videoEl.style.position = "absolute";
-    videoEl.style.left = "-9999px";
-    root.appendChild(videoEl);
-
-    // DEBUG CANVAS ATTRIBUTES
-    if (enableDebug) {
-      canvasEl.style.width = window.innerWidth;
-      canvasEl.style.height = window.innerHeight;
-      canvasEl.width = window.innerWidth;
-      canvasEl.height = window.innerHeight;
-      canvasEl.style.transform = "rotateY(180deg)";
-      canvasEl.style.position = "fixed";
-      canvasEl.style.top = 0;
-      canvasEl.style.left = 0;
-      canvasEl.style.pointerEvents = "none";
-      canvasEl.width = window.innerWidth;
-      canvasEl.height = window.innerHeight;
-      root.appendChild(canvasEl);
-    }
-
-    let rafID;
+    // Define Animation Loop and set rAFID
     const startPrediction = () => {
       predictWebcam();
       rafID = requestAnimationFrame(startPrediction);
     };
 
+    // Append HTML Elements
+    root.appendChild(videoEl);
+    root.appendChild(canvasEl);
+
+    // If stream has loaded, start gesture prediction
     if (streamRunning) {
       startPrediction();
     }
 
     return () => {
-      cancelAnimationFrame(rafID);
       root.removeChild(videoEl);
-      if (enableDebug) root.removeChild(canvasEl);
+      root.removeChild(canvasEl);
+
+      cancelAnimationFrame(rafID);
     };
   }, [enableDebug, predictWebcam, streamRunning]);
 
@@ -156,7 +216,7 @@ const useGestureControls = () => {
     return () => window.removeEventListener("click", startStream);
   }, [startStream]);
 
-  return;
+  return [startStream, gestureControlsData];
 };
 
 export default useGestureControls;

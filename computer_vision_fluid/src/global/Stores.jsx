@@ -13,3 +13,7 @@ export const useMouseStore = create(() => ({
 export const usePingPongStore = create(() => ({
   pingPongTexture: createRef(),
 }));
+
+export const useGestureControlsStore = create(() => ({
+  gestureControlsData: createRef(),
+}));

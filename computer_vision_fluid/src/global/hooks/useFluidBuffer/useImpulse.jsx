@@ -2,14 +2,14 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo } from "react";
 import { Uniform, Vector2 } from "three";
 
-import { useMouseStore } from "@/global/Stores";
+import { useGestureControlsStore } from "@/global/Stores";
 import useShaderPass from "./useShaderPass";
 
 import impulseFrag from "./shaders/impulse.frag?raw";
 
 const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO }) => {
   const { size } = useThree();
-  const { mouseData } = useMouseStore();
+  const { gestureControlsData } = useGestureControlsStore();
 
   const uniforms = useMemo(() => {
     return {
@@ -29,13 +29,13 @@ const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO })
   });
 
   useFrame(() => {
-    if (!mouseData.current) return;
+    if (!gestureControlsData.current) return;
     uniforms.uVelocity.value = inputFBO.texture;
 
-    const { delta, position } = mouseData.current;
+    const test = gestureControlsData.current[0][0];
 
-    uniforms.uDelta.value.copy(delta);
-    uniforms.uPosition.value.copy(position);
+    uniforms.uDelta.value.copy(test.delta);
+    uniforms.uPosition.value.copy(test.position);
   });
 
   return impulseTextureRef;

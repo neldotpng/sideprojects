@@ -4,18 +4,18 @@ import Debug from "@/global/Debug";
 import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
 import useFluidBuffer from "@/global/hooks/useFluidBuffer";
 
-import { useMouseStore } from "@/global/Stores";
-import useMouse from "@/global/hooks/useMouse";
+import { useGestureControlsStore } from "@/global/Stores";
+import useGestureControls from "@/global/hooks/useGestureControls";
 
 const Scene = () => {
   const { velocity } = useFluidBuffer();
 
-  const mouseDataRef = useMouse();
+  const [startStream, gestureControlsDataRef] = useGestureControls();
 
-  // Init MouseStore
+  // Init GestureControlsStore
   useEffect(() => {
-    useMouseStore.setState({ mouseData: mouseDataRef });
-  }, [mouseDataRef]);
+    useGestureControlsStore.setState({ gestureControlsData: gestureControlsDataRef });
+  }, [gestureControlsDataRef]);
 
   return (
     <>

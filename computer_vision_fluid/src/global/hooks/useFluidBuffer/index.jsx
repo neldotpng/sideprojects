@@ -9,7 +9,7 @@ import useDivergence from "./useDivergence";
 import useGradient from "./useGradient";
 import useVorticity from "./useVorticity";
 import useAddVorticity from "./useAddVorticity";
-// import useColor from "./useColor";
+import useColor from "./useColor";
 
 const useFluidBuffer = ({
   resolution = 256,
@@ -39,7 +39,7 @@ const useFluidBuffer = ({
   useAdvection({
     step: gridScale,
     dissipation: 1.25,
-    inputFBO: buffer,
+    inputFBO: velocityA,
     outputFBO: velocityB,
   });
   // Apply external force impulse to base velocity
@@ -81,6 +81,10 @@ const useFluidBuffer = ({
     strength: 1,
     velocityFBO: velocityB,
     vorticityFBO: vorticity,
+    outputFBO: velocityA,
+  });
+  useColor({
+    inputFBO: velocityA,
     outputFBO: buffer,
   });
 
