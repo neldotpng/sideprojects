@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo } from "react";
-import { Uniform, Vector2 } from "three";
+import { Uniform, Vector2, Vector4 } from "three";
 
 import { useGestureControlsStore } from "@/global/Stores";
 import useShaderPass from "./useShaderPass";
@@ -17,8 +17,16 @@ const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO })
       uVelocity: new Uniform(inputFBO.texture),
       uForce: new Uniform(cursorForce),
       uSize: new Uniform(cursorSize),
-      uDelta: new Uniform(new Vector2(0, 0)),
-      uPosition: new Uniform(new Vector2(0, 0)),
+      uImpulse00: new Uniform(new Vector4(0)),
+      uImpulse01: new Uniform(new Vector4(0)),
+      uImpulse02: new Uniform(new Vector4(0)),
+      uImpulse03: new Uniform(new Vector4(0)),
+      uImpulse04: new Uniform(new Vector4(0)),
+      uImpulse10: new Uniform(new Vector4(0)),
+      uImpulse11: new Uniform(new Vector4(0)),
+      uImpulse12: new Uniform(new Vector4(0)),
+      uImpulse13: new Uniform(new Vector4(0)),
+      uImpulse14: new Uniform(new Vector4(0)),
     };
   }, [cursorSize, cursorForce, inputFBO, size]);
 
@@ -32,10 +40,12 @@ const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO })
     if (!gestureControlsData.current) return;
     uniforms.uVelocity.value = inputFBO.texture;
 
-    const test = gestureControlsData.current[0][0];
-
-    uniforms.uDelta.value.copy(test.delta);
-    uniforms.uPosition.value.copy(test.position);
+    gestureControlsData.current.forEach((hand, i) => {
+      hand.forEach((finger, j) => {
+        const { position, delta } = finger;
+        uniforms[`uImpulse${i}${j}`].value.set(position.x, position.y, delta.x, delta.y);
+      });
+    });
   });
 
   return impulseTextureRef;

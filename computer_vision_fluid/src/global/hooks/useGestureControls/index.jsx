@@ -93,11 +93,11 @@ const useGestureControls = (numHands = 2) => {
       // Loop through landmarks to get approximate hand position in the window
       results.landmarks.forEach((handLandmarks, i) => {
         const fingers = [
-          // handLandmarks[4], // Thumb = 0
+          handLandmarks[4], // Thumb = 0
           handLandmarks[8], // Index = 1
-          // handLandmarks[12], // Middle = 2
-          // handLandmarks[16], // Ring = 3
-          // handLandmarks[20], // Pinky = 4
+          handLandmarks[12], // Middle = 2
+          handLandmarks[16], // Ring = 3
+          handLandmarks[20], // Pinky = 4
         ];
 
         fingers.forEach((landmark, j) => {

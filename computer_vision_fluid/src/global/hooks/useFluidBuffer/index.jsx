@@ -1,6 +1,7 @@
 import { useThree } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import { LinearFilter, FloatType, RGBAFormat } from "three";
+import { useControls } from "leva";
 
 import useAdvection from "./useAdvection";
 import useImpulse from "./useImpulse";
@@ -24,6 +25,15 @@ const useFluidBuffer = ({
     format: RGBAFormat,
   },
 } = {}) => {
+  const { c_size, c_force } = useControls({
+    c_size: { value: 0.02, min: 0, max: 1, step: 0.001 },
+    c_force: {
+      value: 16,
+      min: 1,
+      max: 100,
+      step: 1,
+    },
+  });
   const { size } = useThree();
 
   // Main FBOS
@@ -44,8 +54,8 @@ const useFluidBuffer = ({
   });
   // Apply external force impulse to base velocity
   useImpulse({
-    cursorSize: size.width * 0.1,
-    cursorForce: 12,
+    cursorSize: size.width * c_size,
+    cursorForce: c_force,
     inputFBO: velocityB,
     outputFBO: velocityA,
   });
