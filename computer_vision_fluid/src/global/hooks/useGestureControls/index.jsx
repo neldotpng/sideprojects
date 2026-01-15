@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GestureRecognizer, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 import { useControls } from "leva";
 import { Vector2 } from "three";
+import { useFrame } from "@react-three/fiber";
 
 const useGestureControls = (numHands = 2) => {
   // GestureRecognizer Options
@@ -71,12 +72,6 @@ const useGestureControls = (numHands = 2) => {
     // VIDEO ATTRIBUTES
     videoEl.playsInline = true;
     videoEl.autoplay = true;
-    videoEl.style.cssText = `
-      visibility: hidden;
-      position: absolute;
-      left: -9999px;
-      height: 360px;
-    `;
 
     // CANVAS ATTRIBUTES
     // TOFIX: HANDLE CANVAS RESIZE
@@ -182,33 +177,20 @@ const useGestureControls = (numHands = 2) => {
   }, [streamInit]);
 
   useEffect(() => {
-    let rafID;
-    const videoEl = video.current;
     const canvasEl = canvas.current;
     const root = document.querySelector("#root");
 
-    // Define Animation Loop and set rAFID
-    const startPrediction = () => {
-      predictWebcam();
-      rafID = requestAnimationFrame(startPrediction);
-    };
-
-    // Append HTML Elements
-    root.appendChild(videoEl);
+    // Append HTML Element
     root.appendChild(canvasEl);
 
-    // If stream has loaded, start gesture prediction
-    if (streamRunning) {
-      startPrediction();
-    }
-
     return () => {
-      root.removeChild(videoEl);
       root.removeChild(canvasEl);
-
-      cancelAnimationFrame(rafID);
     };
   }, [enableDebug, predictWebcam, streamRunning]);
+
+  useFrame(() => {
+    if (streamRunning) predictWebcam();
+  });
 
   useEffect(() => {
     window.addEventListener("click", startStream);
