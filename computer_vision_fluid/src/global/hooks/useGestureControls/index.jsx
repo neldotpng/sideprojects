@@ -11,7 +11,7 @@ const worker = window.Worker
 
 const useGestureControls = (numHands = 2) => {
   // Leva Controls for Debug
-  const { enableDebug } = useControls({ enableDebug: true });
+  const { enableDebug } = useControls({ enableDebug: false });
 
   // State Management for Video Stream
   const [streamRunning, setStreamRunning] = useState(false);
@@ -83,7 +83,7 @@ const useGestureControls = (numHands = 2) => {
     if (!results) {
       return;
     }
-    // if Debug Mode enabled clear canvas when hands not in frame
+    // if debug enabled clear canvas when hands not in frame
     if (enableDebug) {
       ctx.current.clearRect(0, 0, canvas.current.width, canvas.current.height);
     }
@@ -92,6 +92,7 @@ const useGestureControls = (numHands = 2) => {
     if (results && results.landmarks.length > 0) {
       // Loop through landmarks to get approximate hand position in the window
       results.landmarks.forEach((handLandmarks, i) => {
+        const handedness = results.handedness[i][0].index;
         const fingers = [
           handLandmarks[4], // Thumb = 0
           handLandmarks[8], // Index = 1
@@ -101,7 +102,7 @@ const useGestureControls = (numHands = 2) => {
         ];
 
         fingers.forEach((landmark, j) => {
-          const fingerData = gestureControlsData.current[i][j];
+          const fingerData = gestureControlsData.current[handedness][j];
 
           fingerData.position
             .set(landmark.x, landmark.y)
@@ -145,6 +146,9 @@ const useGestureControls = (numHands = 2) => {
   const startStream = useCallback(() => {
     if (streamInit) return;
 
+    // Initialize worker with max numHands
+    worker.postMessage({ type: "init", numHands });
+
     const constraints = {
       video: true,
       facingMode: "user",
@@ -158,6 +162,7 @@ const useGestureControls = (numHands = 2) => {
         setStreamRunning(true);
 
         video.current.requestVideoFrameCallback(onFrame);
+
         worker.onmessage = (e) => {
           _results.current = e.data.result;
         };
@@ -165,17 +170,17 @@ const useGestureControls = (numHands = 2) => {
     });
 
     setStreamInit(true);
-  }, [streamInit, onFrame]);
+  }, [numHands, streamInit, onFrame]);
 
   useEffect(() => {
     const canvasEl = canvas.current;
     const root = document.querySelector("#root");
 
     // Append HTML Element
-    root.appendChild(canvasEl);
+    if (enableDebug) root.appendChild(canvasEl);
 
     return () => {
-      root.removeChild(canvasEl);
+      if (enableDebug) root.removeChild(canvasEl);
     };
   }, [enableDebug, predictWebcam, streamRunning]);
 
@@ -183,6 +188,7 @@ const useGestureControls = (numHands = 2) => {
     if (streamRunning) predictWebcam();
   });
 
+  // TODO: MOVE FUNCTIONALITY OUT OF WINDOW CLICK
   useEffect(() => {
     window.addEventListener("click", startStream);
 

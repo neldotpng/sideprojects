@@ -1,5 +1,7 @@
 self.importScripts("./mediapipe/vision_bundle.js");
 
+let gestureRecognizer;
+let _busy = false;
 const options = {
   baseOptions: {
     modelAssetPath: "./mediapipe/gesture_recognizer.task",
@@ -12,29 +14,44 @@ const options = {
 
 // Load and create GestureRecognizing Task Model
 const createGestureRecognizer = async () => {
-  // _mediapipe const included in importScript
-  // ignore error
+  // _mediapipe const imported from importScript
   const vision = await _mediapipe.FilesetResolver.forVisionTasks("./mediapipe/wasm");
 
   return _mediapipe.GestureRecognizer.createFromOptions(vision, options);
 };
 
-const gestureRecognizer = createGestureRecognizer();
+const sendFrameData = async (data) => {
+  const { bitmap, timestamp } = data;
 
-self.onmessage = async (e) => {
-  if (e.data.type === "frame") {
-    const { bitmap, timestamp } = e.data;
+  // Check if Frame is in process
+  if (_busy) {
+    bitmap.close();
+    return;
+  }
 
-    const result = await gestureRecognizer.then((gr) => {
-      return gr.recognize(bitmap);
-    });
+  // Set frame to in process
+  _busy = true;
 
-    bitmap.close(); // free GPU memory ASAP
+  const result = await gestureRecognizer.then((gr) => {
+    return gr.recognize(bitmap);
+  });
 
-    self.postMessage({
-      type: "result",
-      result,
-      timestamp,
-    });
+  bitmap.close(); // free GPU memory ASAP
+
+  self.postMessage({ type: "result", result, timestamp });
+
+  // Frame process complete
+  _busy = false;
+};
+
+self.onmessage = async ({ data }) => {
+  switch (data.type) {
+    case "init":
+      options.numHands = data.numHands;
+      gestureRecognizer = createGestureRecognizer();
+      break;
+    case "frame":
+      sendFrameData(data);
+      break;
   }
 };
