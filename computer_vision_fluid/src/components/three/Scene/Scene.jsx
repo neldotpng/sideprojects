@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 
 import Debug from "@/global/Debug";
-import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
+// import FBOPlane from "@/components/three/FBOPlane/FBOPlane";
+import Grass from "../Grass/Grass";
 import useFluidBuffer from "@/global/hooks/useFluidBuffer";
+import useGestureControls from "@/global/hooks/useGestureControls";
 
 import { useGestureControlsStore } from "@/global/Stores";
-import useGestureControls from "@/global/hooks/useGestureControls";
 
 const Scene = () => {
   const { velocity } = useFluidBuffer();
@@ -21,7 +22,9 @@ const Scene = () => {
     <>
       <Debug />
 
-      <FBOPlane texture={velocity.texture} />
+      <Grass fluidTexture={velocity.texture} />
+
+      {/* <FBOPlane texture={velocity.texture} /> */}
     </>
   );
 };

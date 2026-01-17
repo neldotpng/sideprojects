@@ -11,7 +11,9 @@ const worker = window.Worker
 
 const useGestureControls = (numHands = 2) => {
   // Leva Controls for Debug
-  const { enableDebug } = useControls({ enableDebug: false });
+  const { enableDebug } = useControls({
+    enableDebug: { value: false, label: "Show Finger Markers" },
+  });
 
   // State Management for Video Stream
   const [streamRunning, setStreamRunning] = useState(false);

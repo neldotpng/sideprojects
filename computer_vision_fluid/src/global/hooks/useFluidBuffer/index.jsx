@@ -1,4 +1,4 @@
-import { useThree } from "@react-three/fiber";
+// import { useThree } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import { LinearFilter, FloatType, RGBAFormat } from "three";
 import { useControls } from "leva";
@@ -25,16 +25,30 @@ const useFluidBuffer = ({
     format: RGBAFormat,
   },
 } = {}) => {
-  const { c_size, c_force } = useControls({
-    c_size: { value: 0.02, min: 0, max: 1, step: 0.001 },
+  const { c_size, c_force, dissipation } = useControls({
+    c_size: {
+      label: "Finger Size",
+      value: 70,
+      min: 0,
+      max: 100,
+      step: 1,
+    },
     c_force: {
-      value: 16,
+      label: "Strength",
+      value: 24,
       min: 1,
       max: 100,
       step: 1,
     },
+    dissipation: {
+      label: "Dissipation",
+      value: 1.25,
+      min: 0,
+      max: 10,
+      step: 0.01,
+    },
   });
-  const { size } = useThree();
+  // const { size } = useThree();
 
   // Main FBOS
   const velocityA = useFBO(resolution, resolution, fboSettings);
@@ -48,13 +62,13 @@ const useFluidBuffer = ({
   // Apply Advection to input velocity (= last recorded velocity value)
   useAdvection({
     step: gridScale,
-    dissipation: 1.25,
+    dissipation: dissipation,
     inputFBO: velocityA,
     outputFBO: velocityB,
   });
   // Apply external force impulse to base velocity
   useImpulse({
-    cursorSize: size.width * c_size,
+    cursorSize: c_size,
     cursorForce: c_force,
     inputFBO: velocityB,
     outputFBO: velocityA,
@@ -98,7 +112,7 @@ const useFluidBuffer = ({
     outputFBO: buffer,
   });
 
-  return { velocity: buffer };
+  return { velocity: velocityA };
 };
 
 export default useFluidBuffer;
