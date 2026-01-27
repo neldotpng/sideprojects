@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import { DrawingUtils } from "@mediapipe/tasks-vision";
 import { useControls } from "leva";
 import { Vector2 } from "three";
-import { useFrame } from "@react-three/fiber";
 
 // Web Worker Init
 const worker = window.Worker
@@ -14,6 +14,8 @@ const useGestureControls = (numHands = 2) => {
   const { enableDebug } = useControls({
     enableDebug: { value: false, label: "Show Finger Markers" },
   });
+
+  const { size, viewport } = useThree();
 
   // State Management for Video Stream
   const [streamRunning, setStreamRunning] = useState(false);
@@ -45,16 +47,15 @@ const useGestureControls = (numHands = 2) => {
   useEffect(() => {
     const videoEl = video.current;
     const canvasEl = canvas.current;
-    const { innerWidth, innerHeight } = window;
+    const { innerWidth, innerHeight, devicePixelRatio } = window;
 
     // VIDEO ATTRIBUTES
     videoEl.playsInline = true;
     videoEl.autoplay = true;
 
     // CANVAS ATTRIBUTES
-    // TOFIX: HANDLE CANVAS RESIZE
-    canvasEl.width = innerWidth;
-    canvasEl.height = innerHeight;
+    canvasEl.width = innerWidth * devicePixelRatio;
+    canvasEl.height = innerHeight * devicePixelRatio;
     canvasEl.style.cssText = `
       width: ${innerWidth}px;
       height: ${innerHeight}px;
@@ -66,6 +67,17 @@ const useGestureControls = (numHands = 2) => {
     `;
   }, []);
 
+  useEffect(() => {
+    const canvasEl = canvas.current;
+    const { width, height } = size;
+    const { dpr } = viewport;
+
+    canvasEl.width = width * dpr;
+    canvasEl.height = height * dpr;
+    canvasEl.style.width = `${width}px`;
+    canvasEl.style.height = `${height}px`;
+  }, [size, viewport]);
+
   // Debug Function
   // Draws landmarks to canvas
   const drawLandmarks = useCallback((landmarks) => {
@@ -74,7 +86,7 @@ const useGestureControls = (numHands = 2) => {
       // https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker#models
       drawingUtils.current.drawLandmarks(landmarks, {
         color: `rgba(255, 153, 0, 1)`,
-        lineWidth: 2,
+        lineWidth: 10,
       });
     }
   }, []);
@@ -189,13 +201,6 @@ const useGestureControls = (numHands = 2) => {
   useFrame(() => {
     if (streamRunning) predictWebcam();
   });
-
-  // TODO: MOVE FUNCTIONALITY OUT OF WINDOW CLICK
-  useEffect(() => {
-    window.addEventListener("click", startStream);
-
-    return () => window.removeEventListener("click", startStream);
-  }, [startStream]);
 
   return [startStream, gestureControlsData];
 };

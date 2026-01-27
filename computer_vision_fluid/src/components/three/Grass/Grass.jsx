@@ -3,21 +3,13 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useControls, folder } from "leva";
 
-import Background from "../Background/Background";
 import CustomShaderMaterial from "@/global/materials/CustomShaderMaterial";
 import grassVert from "./shaders/grass.vert?raw";
 import grassFrag from "./shaders/grass.frag?raw";
 
 import { useScrollStore } from "@/global/Stores";
 
-// const ROWS = 150;
-// const COLS = 150;
-// const NUM_GRASS = ROWS * COLS;
-// const GRASS_SEGMENTS = 4;
-// const GRASS_WIDTH = 0.05;
-// const GRASS_HEIGHT = 0.25;
-
-const Grass = ({ fluidTexture, segments }) => {
+const Grass = ({ fluidTexture }) => {
   const meshRef = useRef();
   const { viewport } = useThree();
   const { scrollData } = useScrollStore();
@@ -32,7 +24,7 @@ const Grass = ({ fluidTexture, segments }) => {
         label: "Segments",
       },
       GRASS_WIDTH: {
-        value: 0.05,
+        value: 0.025,
         min: 0.01,
         max: 1,
         step: 0.01,
@@ -46,7 +38,7 @@ const Grass = ({ fluidTexture, segments }) => {
         label: "Height",
       },
       ROWS: {
-        value: 150,
+        value: 200,
         min: 50,
         max: 250,
         step: 1,
@@ -133,7 +125,6 @@ const Grass = ({ fluidTexture, segments }) => {
 
   return (
     <>
-      <Background fluidTexture={fluidTexture} />
       <mesh
         ref={meshRef}
         geometry={geometry}
