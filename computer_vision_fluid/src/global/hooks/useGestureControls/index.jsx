@@ -9,7 +9,9 @@ const worker = window.Worker
   ? new Worker(new URL("./gesture.worker.js", import.meta.url))
   : console.error("Your browser does not support WebWorkers.");
 
-const useGestureControls = (numHands = 2) => {
+const NUM_HANDS = 2;
+
+const useGestureControls = () => {
   // Leva Controls for Debug
   const { enableDebug } = useControls({
     enableDebug: { value: false, label: "Show Finger Markers" },
@@ -34,11 +36,12 @@ const useGestureControls = (numHands = 2) => {
 
   // Velocity Management Ref
   const gestureControlsData = useRef(
-    [...Array(numHands)].map(() =>
+    [...Array(NUM_HANDS)].map(() =>
       [...Array(5)].map(() => ({
         lastPosition: new Vector2(),
         position: new Vector2(),
         delta: new Vector2(),
+        zPos: 0,
       }))
     )
   );
@@ -91,6 +94,15 @@ const useGestureControls = (numHands = 2) => {
     }
   }, []);
 
+  const resetHand = useCallback((hand) => {
+    hand.forEach((finger) => {
+      finger.position.set(0, 0);
+      finger.delta.set(0, 0);
+      finger.zPos = 0;
+      finger.lastPosition.set(0, 0);
+    });
+  }, []);
+
   const predictWebcam = useCallback(() => {
     const results = _results.current;
 
@@ -102,33 +114,42 @@ const useGestureControls = (numHands = 2) => {
       ctx.current.clearRect(0, 0, canvas.current.width, canvas.current.height);
     }
 
-    // if hands recognized, pass landmarks to fingertips array
-    if (results && results.landmarks.length > 0) {
+    if (results.landmarks.length > 0) {
       // Loop through landmarks to get approximate hand position in the window
-      results.landmarks.forEach((handLandmarks, i) => {
-        const handedness = results.handedness[i][0].index;
-        const fingers = [
-          handLandmarks[4], // Thumb = 0
-          handLandmarks[8], // Index = 1
-          handLandmarks[12], // Middle = 2
-          handLandmarks[16], // Ring = 3
-          handLandmarks[20], // Pinky = 4
-        ];
+      gestureControlsData.current.forEach((hand, i) => {
+        const handedness = results.handedness[i] ? results.handedness[i][0].index : null;
+        const fingers = results.landmarks[i]
+          ? [
+              results.landmarks[i][4], // Thumb = 0
+              results.landmarks[i][8], // Index = 1
+              results.landmarks[i][12], // Middle = 2
+              results.landmarks[i][16], // Ring = 3
+              results.landmarks[i][20], // Pinky = 4
+            ]
+          : null;
 
-        fingers.forEach((landmark, j) => {
-          const fingerData = gestureControlsData.current[handedness][j];
+        if (handedness !== null) {
+          gestureControlsData.current[handedness].forEach((finger, j) => {
+            const landmark = fingers[j];
 
-          fingerData.position
-            .set(landmark.x, landmark.y)
-            .subScalar(0.5)
-            .multiplyScalar(-2)
-            .clampScalar(-1, 1);
-          fingerData.delta
-            .subVectors(fingerData.position, fingerData.lastPosition)
-            .clampScalar(-1, 1);
+            // Finger Screen Position X-Y
+            finger.position
+              .set(landmark.x, landmark.y)
+              .subScalar(0.5)
+              .multiplyScalar(-2)
+              .clampScalar(-1, 1);
 
-          fingerData.lastPosition.copy(fingerData.position);
-        });
+            // Check for lastPosition, if reset to 0, don't update delta till next frame
+            if (finger.lastPosition.x !== 0 && finger.lastPosition.y !== 0) {
+              finger.delta.subVectors(finger.position, finger.lastPosition).clampScalar(-0.5, 0.5);
+            }
+
+            // Z-tracking
+            finger.zPos = landmark.z;
+
+            finger.lastPosition.copy(finger.position);
+          });
+        }
 
         if (enableDebug) {
           // If hands are in frame, draw landmarks to canvas
@@ -136,14 +157,12 @@ const useGestureControls = (numHands = 2) => {
         }
       });
     } else {
+      // If no results recorded, zero out both hands
       gestureControlsData.current.forEach((hand) => {
-        hand.forEach((finger) => {
-          finger.position.set(0, 0);
-          finger.delta.set(0, 0);
-        });
+        resetHand(hand);
       });
     }
-  }, [enableDebug, drawLandmarks]);
+  }, [enableDebug, drawLandmarks, resetHand]);
 
   const onFrame = useCallback((now, metadata) => {
     createImageBitmap(video.current).then((bitmap) => {
@@ -160,8 +179,8 @@ const useGestureControls = (numHands = 2) => {
   const startStream = useCallback(() => {
     if (streamInit) return;
 
-    // Initialize worker with max numHands
-    worker.postMessage({ type: "init", numHands });
+    // Initialize worker with max NUM_HANDS
+    worker.postMessage({ type: "init", numHands: NUM_HANDS });
 
     const constraints = {
       video: true,
@@ -184,7 +203,7 @@ const useGestureControls = (numHands = 2) => {
     });
 
     setStreamInit(true);
-  }, [numHands, streamInit, onFrame]);
+  }, [streamInit, onFrame]);
 
   useEffect(() => {
     const canvasEl = canvas.current;
