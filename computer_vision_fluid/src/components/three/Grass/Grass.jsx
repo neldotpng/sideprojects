@@ -17,21 +17,21 @@ const Grass = ({ fluidTexture }) => {
   const { GRASS_SEGMENTS, GRASS_WIDTH, GRASS_HEIGHT, ROWS } = useControls({
     Grass: folder({
       GRASS_SEGMENTS: {
-        value: 4,
+        value: 2,
         min: 2,
         max: 10,
         step: 1,
         label: "Segments",
       },
       GRASS_WIDTH: {
-        value: 0.025,
+        value: 0.02,
         min: 0.01,
         max: 1,
         step: 0.01,
         label: "Width",
       },
       GRASS_HEIGHT: {
-        value: 0.25,
+        value: 0.2,
         min: 0.01,
         max: 1,
         step: 0.01,
@@ -40,7 +40,7 @@ const Grass = ({ fluidTexture }) => {
       ROWS: {
         value: 200,
         min: 50,
-        max: 250,
+        max: 300,
         step: 1,
         label: "Rows",
       },

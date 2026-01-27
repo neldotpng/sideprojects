@@ -1,7 +1,7 @@
 // import { useThree } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import { LinearFilter, FloatType, RGBAFormat } from "three";
-import { useControls } from "leva";
+import { useControls, folder } from "leva";
 
 import useAdvection from "./useAdvection";
 import useImpulse from "./useImpulse";
@@ -26,27 +26,29 @@ const useFluidBuffer = ({
   },
 } = {}) => {
   const { c_size, c_force, dissipation } = useControls({
-    c_size: {
-      label: "Finger Size",
-      value: 70,
-      min: 0,
-      max: 100,
-      step: 1,
-    },
-    c_force: {
-      label: "Strength",
-      value: 24,
-      min: 1,
-      max: 100,
-      step: 1,
-    },
-    dissipation: {
-      label: "Dissipation",
-      value: 1.25,
-      min: 0,
-      max: 10,
-      step: 0.01,
-    },
+    "Fluid Impulse": folder({
+      c_size: {
+        label: "Size",
+        value: 70,
+        min: 0,
+        max: 100,
+        step: 1,
+      },
+      c_force: {
+        label: "Strength",
+        value: 24,
+        min: 1,
+        max: 100,
+        step: 1,
+      },
+      dissipation: {
+        label: "Dissipation",
+        value: 3,
+        min: 0,
+        max: 10,
+        step: 0.01,
+      },
+    }),
   });
   // const { size } = useThree();
 

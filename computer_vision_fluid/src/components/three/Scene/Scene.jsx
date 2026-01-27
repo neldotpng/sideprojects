@@ -27,6 +27,7 @@ const Scene = () => {
   const onClick = () => {
     startStream();
     setStreamStarted(true);
+    setHovered(false);
   };
 
   useEffect(() => {
