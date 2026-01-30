@@ -3,6 +3,8 @@ uniform vec2 uMouse;
 uniform vec2 uResolution;
 uniform sampler2D uRaymarchTexture;
 uniform sampler2D uTexture;
+uniform float uPixelSize;
+uniform float uFadeStrength;
 
 varying vec2 vUv;
 
@@ -26,12 +28,13 @@ vec2 calcCellRes(vec2 _uv, vec2 _res, float _cellSize) {
 
 void main() {
   vec3 color = vec3(0.);
-  vec2 _uv = calcCellRes(vUv, uResolution, 15.);
+  vec2 _uv = calcCellRes(vUv, uResolution, uPixelSize);
 
   vec4 fluidTex = texture2D(uTexture, _uv);
 
   float d = length(fluidTex.rg);
   color = 1. - vec3(d);
+  color *= pow(d, uFadeStrength);
 
-  gl_FragColor = vec4(color, d * 0.25);
+  gl_FragColor = vec4(color, 1.);
 }

@@ -189,7 +189,7 @@ void main() {
 
   // WIND ANGLE AXIS
   vec3 windAxis = clamp(tex.yzx, -2., 2.);
-  float windStrength = min(length(tex.rg), 1.);
+  float windStrength = min(length(tex.rg) * length(windAxis), 2.);
   float windLeanAngle = windStrength * heightPercent * grassParams.y;
 
   // CALCULATE ROTATION AND RECALCULATE POSITION

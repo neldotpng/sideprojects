@@ -14,8 +14,9 @@ const Grass = ({ fluidTexture }) => {
   const { viewport } = useThree();
   const { scrollData } = useScrollStore();
 
-  const { GRASS_SEGMENTS, GRASS_WIDTH, GRASS_HEIGHT, ROWS } = useControls({
+  const { ENABLE, GRASS_SEGMENTS, GRASS_WIDTH, GRASS_HEIGHT, ROWS, LEAN_STRENGTH } = useControls({
     Grass: folder({
+      ENABLE: { value: true, label: "Enable" },
       GRASS_SEGMENTS: {
         value: 2,
         min: 2,
@@ -43,6 +44,13 @@ const Grass = ({ fluidTexture }) => {
         max: 300,
         step: 1,
         label: "Rows",
+      },
+      LEAN_STRENGTH: {
+        value: 1,
+        min: 0.5,
+        max: 1.5,
+        step: 0.01,
+        label: "Wind Lean",
       },
     }),
   });
@@ -97,7 +105,7 @@ const Grass = ({ fluidTexture }) => {
 
   const uniforms = {
     grassParams: {
-      value: new THREE.Vector4(GRASS_SEGMENTS, 1, GRASS_WIDTH, GRASS_HEIGHT),
+      value: new THREE.Vector4(GRASS_SEGMENTS, LEAN_STRENGTH, GRASS_WIDTH, GRASS_HEIGHT),
     },
     fieldParams: {
       value: new THREE.Vector4(ROWS, ROWS, GRASS_PATCH_SIZE.x, GRASS_PATCH_SIZE.y),
@@ -129,7 +137,8 @@ const Grass = ({ fluidTexture }) => {
         ref={meshRef}
         geometry={geometry}
         position={[0, 0, -0.5]}
-        rotation={[Math.PI / 2, 0, 0]}>
+        rotation={[Math.PI / 2, 0, 0]}
+        visible={ENABLE}>
         <CustomShaderMaterial
           vertexShader={grassVert}
           fragmentShader={grassFrag}
