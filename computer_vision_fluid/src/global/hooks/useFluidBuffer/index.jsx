@@ -43,8 +43,8 @@ const useFluidBuffer = ({
       },
       dissipation: {
         label: "Dissipation",
-        value: 3,
-        min: 0,
+        value: 1.5,
+        min: 0.1,
         max: 10,
         step: 0.01,
       },

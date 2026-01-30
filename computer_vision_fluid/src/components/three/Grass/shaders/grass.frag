@@ -24,7 +24,7 @@ void main() {
   vec3 color = vColor;
 
   vec3 palette = pal(
-    pow(length(tex.rg) * 2.5, 0.5), 
+    pow(length(tex.rg) * 1.5, 0.5), 
     vec3(0.7 , 0.6 , 0.5 ),
     vec3(0.5 , 0.5 , 0.5 ),
     vec3(1.0 , 1.0 , 1.0 ),

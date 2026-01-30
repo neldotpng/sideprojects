@@ -9,7 +9,7 @@ import backgroundFrag from "./shaders/background.frag?raw";
 
 const Background = ({ fluidTexture }) => {
   const { ENABLE, PIXEL_SIZE, STRENGTH } = useControls({
-    Background: folder({
+    "Dark Liquid": folder({
       ENABLE: { value: false, label: "Enable" },
       PIXEL_SIZE: { value: 1, min: 1, max: 100, step: 1, label: "Pixel Size" },
       STRENGTH: { value: 0.5, min: 0.01, max: 2, step: 0.01, label: "Fade Strength" },

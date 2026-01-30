@@ -32,7 +32,7 @@ const Grass = ({ fluidTexture }) => {
         label: "Width",
       },
       GRASS_HEIGHT: {
-        value: 0.2,
+        value: 0.25,
         min: 0.01,
         max: 1,
         step: 0.01,
