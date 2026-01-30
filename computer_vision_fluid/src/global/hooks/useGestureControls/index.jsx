@@ -37,14 +37,14 @@ const useGestureControls = () => {
 
   // Velocity Management Ref
   const gestureControlsData = useRef(
-    [...Array(NUM_HANDS)].map(() =>
-      [...Array(5)].map(() => ({
+    [...Array(NUM_HANDS)].map(() => ({
+      lastActiveTime: 0,
+      fingers: [...Array(5)].map(() => ({
         lastPosition: new Vector2(),
         position: new Vector2(),
         delta: new Vector2(),
-        zPos: 0,
-      }))
-    )
+      })),
+    }))
   );
 
   // Setup HTML Element Attributes on mount
@@ -96,20 +96,21 @@ const useGestureControls = () => {
   }, []);
 
   const resetHand = useCallback((hand) => {
-    hand.forEach((finger) => {
+    hand.fingers.forEach((finger) => {
       finger.position.set(0, 0);
       finger.delta.set(0, 0);
-      finger.zPos = 0;
       finger.lastPosition.set(0, 0);
     });
   }, []);
 
   const predictWebcam = useCallback(() => {
     const results = _results.current;
+    const currentTime = Date.now();
 
     if (!results) {
       return;
     }
+
     // if debug enabled clear canvas when hands not in frame
     if (enableDebug) {
       ctx.current.clearRect(0, 0, canvas.current.width, canvas.current.height);
@@ -117,7 +118,7 @@ const useGestureControls = () => {
 
     if (results.landmarks.length > 0) {
       // Loop through landmarks to get approximate hand position in the window
-      gestureControlsData.current.forEach((hand, i) => {
+      gestureControlsData.current.forEach((_, i) => {
         const handedness = results.handedness[i] ? results.handedness[i][0].index : null;
         const fingers = results.landmarks[i]
           ? [
@@ -130,7 +131,9 @@ const useGestureControls = () => {
           : null;
 
         if (handedness !== null) {
-          gestureControlsData.current[handedness].forEach((finger, j) => {
+          const hand = gestureControlsData.current[handedness];
+
+          hand.fingers.forEach((finger, j) => {
             const landmark = fingers[j];
 
             // Finger Screen Position X-Y
@@ -145,22 +148,31 @@ const useGestureControls = () => {
               finger.delta.subVectors(finger.position, finger.lastPosition).clampScalar(-0.5, 0.5);
             }
 
-            // Z-tracking
-            finger.zPos = landmark.z;
-
             finger.lastPosition.copy(finger.position);
           });
+
+          // Set lastActiveTime
+          hand.lastActiveTime = currentTime;
+        } else {
+          // handle out of frame hand when just 1 hand in frame
+          const oofHand = Math.abs(results.handedness[0][0].index - 1);
+          // Build in delay check to see if hand really out of frame or hand recognition is lagging ~200ms
+          if (gestureControlsData.current[oofHand].lastActiveTime - currentTime <= -100) {
+            resetHand(gestureControlsData.current[oofHand]);
+          }
         }
 
         if (enableDebug) {
-          // If hands are in frame, draw landmarks to canvas
-          drawLandmarks(fingers);
+          drawLandmarks(fingers); // If hands are in frame and debug enabled, draw landmarks to canvas
         }
       });
     } else {
+      // Handle no hands in frame
       // If no results recorded, zero out both hands
       gestureControlsData.current.forEach((hand) => {
-        resetHand(hand);
+        if (hand.lastActiveTime - currentTime <= -100) {
+          resetHand(hand);
+        }
       });
     }
   }, [enableDebug, drawLandmarks, resetHand]);

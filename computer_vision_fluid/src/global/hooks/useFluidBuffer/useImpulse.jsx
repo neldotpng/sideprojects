@@ -41,7 +41,7 @@ const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO })
     uniforms.uVelocity.value = inputFBO.texture;
 
     gestureControlsData.current.forEach((hand, i) => {
-      hand.forEach((finger, j) => {
+      hand.fingers.forEach((finger, j) => {
         const { position, delta } = finger;
         uniforms[`uImpulse${i}${j}`].value.set(position.x, position.y, delta.x, delta.y);
       });
