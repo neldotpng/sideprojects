@@ -25,6 +25,7 @@ const useGestureControls = () => {
 
   // Webcam Stream Ref
   const video = useRef(window.document.createElement("video"));
+  const workerBusy = useRef(false);
 
   // Debug Canvas Refs
   const canvas = useRef(window.document.createElement("canvas"));
@@ -165,12 +166,18 @@ const useGestureControls = () => {
   }, [enableDebug, drawLandmarks, resetHand]);
 
   const onFrame = useCallback((now, metadata) => {
-    createImageBitmap(video.current).then((bitmap) => {
-      worker.postMessage(
-        { type: "frame", bitmap, timestamp: metadata.mediaTime },
-        [bitmap] // transfer ownership
-      );
-    });
+    // If worker is processing a frame, skip bitmap generation
+    if (!workerBusy.current) {
+      // generate bitmap and post to worker
+      createImageBitmap(video.current).then((bitmap) => {
+        workerBusy.current = true;
+
+        worker.postMessage(
+          { type: "frame", bitmap, timestamp: metadata.mediaTime },
+          [bitmap] // transfer ownership
+        );
+      });
+    }
 
     // Start Loop
     video.current.requestVideoFrameCallback(onFrame);
@@ -196,8 +203,10 @@ const useGestureControls = () => {
 
         video.current.requestVideoFrameCallback(onFrame);
 
+        // Read worker results
         worker.onmessage = (e) => {
-          _results.current = e.data.result;
+          workerBusy.current = false; // after worker posts results, allow generation of next bitmap
+          _results.current = e.data.result; // copy results to ref
         };
       });
     });
