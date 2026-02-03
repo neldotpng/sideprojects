@@ -44,7 +44,7 @@ const useGestureControls = () => {
         position: new Vector2(),
         delta: new Vector2(),
       })),
-    }))
+    })),
   );
 
   // Setup HTML Element Attributes on mount
@@ -89,7 +89,7 @@ const useGestureControls = () => {
     if (drawingUtils.current) {
       // https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker#models
       drawingUtils.current.drawLandmarks(landmarks, {
-        color: `rgba(255, 153, 0, 1)`,
+        color: `rgb(0, 255, 0)`,
         lineWidth: 10,
       });
     }
@@ -119,18 +119,19 @@ const useGestureControls = () => {
     if (results.landmarks.length > 0) {
       // Loop through landmarks to get approximate hand position in the window
       gestureControlsData.current.forEach((_, i) => {
-        const handedness = results.handedness[i] ? results.handedness[i][0].index : null;
-        const fingers = results.landmarks[i]
-          ? [
-              results.landmarks[i][4], // Thumb = 0
-              results.landmarks[i][8], // Index = 1
-              results.landmarks[i][12], // Middle = 2
-              results.landmarks[i][16], // Ring = 3
-              results.landmarks[i][20], // Pinky = 4
-            ]
-          : null;
+        let handedness, fingers;
+        if (results.handedness[i]) {
+          handedness = results.handedness[i][0].index;
+          fingers = [
+            results.landmarks[i][4], // Thumb = 0
+            results.landmarks[i][8], // Index = 1
+            results.landmarks[i][12], // Middle = 2
+            results.landmarks[i][16], // Ring = 3
+            results.landmarks[i][20], // Pinky = 4
+          ];
+        }
 
-        if (handedness !== null) {
+        if (handedness !== undefined) {
           const hand = gestureControlsData.current[handedness];
 
           hand.fingers.forEach((finger, j) => {
@@ -186,7 +187,7 @@ const useGestureControls = () => {
 
         worker.postMessage(
           { type: "frame", bitmap, timestamp: metadata.mediaTime },
-          [bitmap] // transfer ownership
+          [bitmap], // transfer ownership
         );
       });
     }
