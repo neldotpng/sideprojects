@@ -43,7 +43,7 @@ const usePingPong = ({
         vertexShader,
         fragmentShader,
       }),
-    [vertexShader, fragmentShader, uniforms]
+    [vertexShader, fragmentShader, uniforms],
   );
 
   // Create Texture

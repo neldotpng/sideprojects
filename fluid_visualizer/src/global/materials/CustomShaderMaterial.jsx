@@ -28,7 +28,7 @@ const ShaderMaterialInstance = shaderMaterial(
     vec2 uv = vUv;
 
     gl_FragColor = vec4(uv, 0., 1.);
-  }`
+  }`,
 );
 
 extend({ ShaderMaterialInstance });
@@ -49,7 +49,7 @@ const CustomShaderMaterial = ({
       uResolution: { value: new THREE.Vector2() },
       uViewport: { value: new THREE.Vector2() },
     }),
-    []
+    [],
   );
 
   useEffect(() => {

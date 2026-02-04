@@ -7,6 +7,8 @@ import Grass from "../Grass/Grass";
 import useFluidBuffer from "@/global/hooks/useFluidBuffer";
 import useGestureControls from "@/global/hooks/useGestureControls";
 
+import PingPongScene from "../PingPongScene";
+
 import { useGestureControlsStore } from "@/global/Stores";
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -59,6 +61,7 @@ const Scene = () => {
           click to start
         </Text>
       )}
+      {/* <PingPongScene song={"/audio/07.mp3"} /> */}
     </>
   );
 };
