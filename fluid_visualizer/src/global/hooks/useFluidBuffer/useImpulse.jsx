@@ -7,7 +7,14 @@ import useShaderPass from "./useShaderPass";
 
 import impulseFrag from "./shaders/impulse.frag?raw";
 
-const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO }) => {
+const useImpulse = ({
+  cursorSize = 100,
+  cursorForce = 20,
+  inputFBO,
+  outputFBO,
+  audioData,
+  pingPongTexture,
+}) => {
   const { size } = useThree();
   const { gestureControlsData } = useGestureControlsStore();
 
@@ -17,6 +24,7 @@ const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO })
       uVelocity: new Uniform(inputFBO.texture),
       uForce: new Uniform(cursorForce),
       uSize: new Uniform(cursorSize),
+      uPingPongTexture: new Uniform(pingPongTexture.current),
       uImpulse00: new Uniform(new Vector4(0, 0, 0, 0)),
       uImpulse01: new Uniform(new Vector4(0, 0, 0, 0)),
       uImpulse02: new Uniform(new Vector4(0, 0, 0, 0)),
@@ -28,7 +36,7 @@ const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO })
       uImpulse13: new Uniform(new Vector4(0, 0, 0, 0)),
       uImpulse14: new Uniform(new Vector4(0, 0, 0, 0)),
     };
-  }, [cursorSize, cursorForce, inputFBO, size]);
+  }, [cursorSize, cursorForce, inputFBO, size, pingPongTexture]);
 
   const impulseTextureRef = useShaderPass({
     fragmentShader: impulseFrag,
@@ -39,6 +47,7 @@ const useImpulse = ({ cursorSize = 100, cursorForce = 20, inputFBO, outputFBO })
   useFrame(() => {
     if (!gestureControlsData.current) return;
     uniforms.uVelocity.value = inputFBO.texture;
+    uniforms.uPingPongTexture.value = pingPongTexture.current;
 
     gestureControlsData.current.forEach((hand, i) => {
       hand.fingers.forEach((finger, j) => {

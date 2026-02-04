@@ -41,11 +41,12 @@ void main() {
   //   }
   // }
 
-  // color = color.r < 0.7 ? vec3(pow(color.r, 2.)) : mix(color, prev, 0.9);
   color.r = getLogBandEnergy(20., 150.);
   color.g = getLogBandEnergy(150., 500.);
   color.b = getLogBandEnergy(500., 2500.);
   color.a = getLogBandEnergy(2500., 20000.);
+
+  // color = color.r < 0.7 ? vec3(pow(color.r, 2.)) : mix(color, prev, 0.9);
 
   gl_FragColor = color;
 }

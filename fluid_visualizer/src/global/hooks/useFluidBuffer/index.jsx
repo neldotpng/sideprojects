@@ -1,4 +1,3 @@
-// import { useThree } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import { LinearFilter, FloatType, RGBAFormat } from "three";
 import { useControls, folder } from "leva";
@@ -24,6 +23,8 @@ const useFluidBuffer = ({
     type: FloatType,
     format: RGBAFormat,
   },
+  audioData = {},
+  pingPongTexture = null,
 } = {}) => {
   const { c_size, c_force, dissipation } = useControls({
     "Fluid Impulse": folder({
@@ -50,7 +51,6 @@ const useFluidBuffer = ({
       },
     }),
   });
-  // const { size } = useThree();
 
   // Main FBOS
   const velocityA = useFBO(resolution, resolution, fboSettings);
@@ -74,6 +74,8 @@ const useFluidBuffer = ({
     cursorForce: c_force,
     inputFBO: velocityB,
     outputFBO: velocityA,
+    audioData: audioData,
+    pingPongTexture: pingPongTexture,
   });
   // Calculate divergence from velocity + impulse
   useDivergence({

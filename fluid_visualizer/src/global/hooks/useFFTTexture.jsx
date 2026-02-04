@@ -28,7 +28,7 @@ const useFFTTexture = (song, fftSize = 1024) => {
 
     loader.load(song, (buffer) => {
       audio.setBuffer(buffer);
-      audio.play();
+      if (!audio.isPlaying) audio.play();
 
       setAudioLoaded(true);
       setTextureData(new THREE.DataTexture(analyzer.current.data, fftSize / 2, 1, THREE.RedFormat));
@@ -42,7 +42,7 @@ const useFFTTexture = (song, fftSize = 1024) => {
     textureData.needsUpdate = true;
   });
 
-  return [textureData, sampleRate];
+  return { textureData, sampleRate };
 };
 
 export default useFFTTexture;

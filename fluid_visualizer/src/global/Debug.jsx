@@ -4,7 +4,7 @@ import { useControls } from "leva";
 
 const Debug = () => {
   const { enablePerformance } = useControls({
-    enablePerformance: { value: false, label: "Show Perf" },
+    enablePerformance: { value: true, label: "Show Perf" },
   });
 
   return (

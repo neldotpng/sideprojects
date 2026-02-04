@@ -1,9 +1,8 @@
 uniform float uTime;
 uniform sampler2D uTexture;
+uniform sampler2D uFFTTexture;
 uniform float uEnergy;
-uniform float uBass;
-uniform float uMids;
-uniform float uHighs;
+uniform float uNyquist;
 
 varying vec2 vUv;
 
@@ -23,17 +22,22 @@ void main() {
   vec3 color = vec3(0.);
   float time = uTime;
 
+  vec2 uv = vUv.xx * 9.;
+  vec2 id = floor(uv);
+  vec2 fr = fract(uv);
+
   vec3 texture = texture2D(uTexture, vUv).rgb;
   color = texture;
 
-  float e = remap(uEnergy, 0., 1., .9, 1.); 
-  float b = remap(uBass, 0., 1., 0., 0.05); 
-  float m = remap(uMids, 0., 1., 0., 0.05); 
-  float h = remap(uHighs, 0., 1., 0., 0.05); 
+  // if (id.x == 8.) color = vec3(getLogBandEnergy(20., 20000.));
 
-  color += b;
-  color += m;
-  color += h;
+  // for (float i = 0.; i < 8.; i++) {
+  //   if (id.x == i) {
+  //     float startHz = 20. * pow(2., i);
+  //     float strength = getLogBandEnergy(startHz, startHz * 2.);
+  //     color = vec3(strength);
+  //   }
+  // }
 
   gl_FragColor = vec4(color, 1.);
 }
