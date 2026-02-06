@@ -44,6 +44,7 @@ const useImpulse = ({
       uImpulse12: new Uniform(new Vector4(0, 0, 0, 0)),
       uImpulse13: new Uniform(new Vector4(0, 0, 0, 0)),
       uImpulse14: new Uniform(new Vector4(0, 0, 0, 0)),
+      uTime: new Uniform(0),
     };
   }, [cursorSize, cursorForce, inputFBO, size, pingPongTexture]);
 
@@ -53,18 +54,20 @@ const useImpulse = ({
     fbo: outputFBO,
   });
 
-  useFrame(() => {
+  useFrame((state, dt) => {
+    uniforms.uTime.value += dt;
+
     if (!gestureControlsData.current) return;
     uniforms.uVelocity.value = inputFBO.texture;
     uniforms.uPingPongTexture.value = pingPongTexture.current;
 
-    // gestureControlsData.current.forEach((hand, i) => {
-    //   hand.fingers.forEach((finger, j) => {
-    //     const { position, delta } = finger;
-    //     uniforms[`uImpulse${i}${j}`].value.set(position.x, position.y, delta.x, delta.y);
-    //   });
-    // });
-    // console.log(audioData);
+    gestureControlsData.current.forEach((hand, i) => {
+      hand.fingers.forEach((finger, j) => {
+        const { position, delta } = finger;
+        uniforms[`uImpulse${i}${j}`].value.set(position.x, position.y, delta.x, delta.y);
+      });
+    });
+
     for (let i = 0; i < audioData.binStrengths.current.length; i++) {
       uniforms[`uAudioBin${i}`].value = audioData.binStrengths.current[i];
     }

@@ -26,6 +26,11 @@ vec2 calcCellRes(vec2 _uv, vec2 _res, float _cellSize) {
   );
 }
 
+vec3 pal( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d )
+{
+    return a + b*cos( 6.28318*(c*t+d) );
+}
+
 void main() {
   vec3 color = vec3(0.);
   float aspect = uResolution.x / uResolution.y;
@@ -36,7 +41,13 @@ void main() {
   vec4 fluidTex = texture2D(uTexture, _uv);
 
   float d = length(fluidTex.rg);
-  color = 1. - vec3(d);
+  color = pal(
+    1. - d, 
+    vec3(0.7 , 0.4 , 0.4 ), 
+    vec3(0.7 , 0.8 , 0.3 ), 
+    vec3(1.0 , 1.0 , 1.0 ), 
+    vec3(0.4 , 0.29 , 0.2 )
+  );
   color *= pow(d, uFadeStrength);
 
   gl_FragColor = vec4(color, 1.);

@@ -21,7 +21,7 @@ import { useGestureControlsStore } from "@/global/Stores";
 
 const Scene = () => {
   // Init FFTTexture
-  const audioData = useFFTTexture("/audio/18.mp3", 4096);
+  const audioData = useFFTTexture("/audio/15.mp3", 4096);
 
   // Uniforms for the PingPong bufferMaterial
   const bufferUniforms = useMemo(() => {
@@ -94,7 +94,7 @@ const Scene = () => {
           onClick={onClick}
           onPointerEnter={() => setHovered(true)}
           onPointerLeave={() => setHovered(false)}>
-          {/* click to start */}
+          click to start
         </Text>
       )}
 
