@@ -184,7 +184,8 @@ void main() {
 
   // TEXTURE REFERENCE BY NDC
   vec3 ndc = worldPosition.xyz / worldPosition.w;
-  vec2 _uv = ndc.xy * 0.5 + 0.5;
+  float aspect = uResolution.x / uResolution.y;
+  vec2 _uv = ndc.xy / vec2(1., aspect) * 0.5 + 0.5;
   vec4 tex = texture2D(uTexture, _uv);
 
   // WIND ANGLE AXIS

@@ -22,8 +22,17 @@ const PingPongScene = ({ audioData, segments = 2 }) => {
     return {
       uFFTTexture: { value: null },
       uAspect: { value: 0 },
+      u00: { value: 0 },
+      u01: { value: 0 },
+      u02: { value: 0 },
+      u03: { value: 0 },
+      u04: { value: 0 },
+      u05: { value: 0 },
+      u06: { value: 0 },
+      u07: { value: 0 },
+      u08: { value: 0 },
+      uNyquist: { value: audioData.sampleRate / 2 },
       uPreset: { value: 0 },
-      uNyquist: { value: audioData.sampleRate },
       uTimeStrength: { value: 0.1 },
       uFadeStrength: { value: 0.1 },
       uTrailStrength: { value: 0.1 },
@@ -52,8 +61,13 @@ const PingPongScene = ({ audioData, segments = 2 }) => {
   }, [viewport, bufferMaterial]);
 
   useFrame((state, delta) => {
-    const { textureData } = audioData;
+    const { textureData, binStrengths } = audioData;
     if (textureData) {
+      binStrengths.current.forEach((strength, i) => {
+        bufferMaterial.uniforms[`u0${i}`].value = strength;
+        shaderMaterial.current.uniforms[`u0${i}`].value = strength;
+      });
+
       // Uniform updates for bufferMaterial
       bufferMaterial.uniforms.uFFTTexture.value = textureData;
 
@@ -78,7 +92,17 @@ const PingPongScene = ({ audioData, segments = 2 }) => {
           uAspect: { value: 0 },
           uTexture: { value: null },
           uFFTTexture: { value: null },
-          uNyquist: { value: audioData.sampleRate },
+          u00: { value: 0 },
+          u01: { value: 0 },
+          u02: { value: 0 },
+          u03: { value: 0 },
+          u04: { value: 0 },
+          u05: { value: 0 },
+          u06: { value: 0 },
+          u07: { value: 0 },
+          u08: { value: 0 },
+          uEnergy: { value: 0 },
+          uNyquist: { value: audioData.sampleRate / 2 },
         }}
         ref={shaderMaterial}
       />

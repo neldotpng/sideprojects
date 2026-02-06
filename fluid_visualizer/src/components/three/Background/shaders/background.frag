@@ -28,7 +28,10 @@ vec2 calcCellRes(vec2 _uv, vec2 _res, float _cellSize) {
 
 void main() {
   vec3 color = vec3(0.);
-  vec2 _uv = calcCellRes(vUv, uResolution, uPixelSize);
+  float aspect = uResolution.x / uResolution.y;
+  vec2 uv = vUv;
+  uv = (uv - 0.5) / vec2(1.0, aspect) + 0.5;
+  vec2 _uv = calcCellRes(uv, uResolution, uPixelSize);
 
   vec4 fluidTex = texture2D(uTexture, _uv);
 

@@ -7,16 +7,32 @@ const listener = new THREE.AudioListener();
 const audio = new THREE.Audio(listener);
 const loader = new THREE.AudioLoader();
 
-const useFFTTexture = (song, fftSize = 1024) => {
+// Calculate average strength of fq in range [start, end]
+const getFrequencyAverage = (data, start, end) => {
+  let sum = 0;
+  const len = end - start;
+
+  for (let i = start; i < end; i++) {
+    sum += data[i];
+  }
+
+  return sum / len / 255;
+};
+
+const useFFTTexture = (song, fftSize = 1024, numBins = 8) => {
   // THREE AudioAnalyzer
   const analyzer = useRef(new THREE.AudioAnalyser(audio, fftSize));
 
   // Return values
   const [textureData, setTextureData] = useState();
   const [sampleRate, setSampleRate] = useState(0);
+  const binStrengths = useRef([]);
 
   // Effects management
   const [audioLoaded, setAudioLoaded] = useState(false);
+
+  // Stateful bass/mids/highs sampling range for averaging and passing uniforms
+  const [binInfo, setBinInfo] = useState([]);
 
   // Hook to Load New Song
   useEffect(() => {
@@ -35,14 +51,44 @@ const useFFTTexture = (song, fftSize = 1024) => {
     });
   }, [song, fftSize]);
 
+  // Update the binInfo based on sampleRate and fftSize
+  useEffect(() => {
+    const binWidth = sampleRate / (fftSize / 2);
+
+    let subBassHz = 20;
+    const binRanges = [...Array(numBins)].map((_, i) => {
+      const binStart = subBassHz * Math.pow(2, i);
+      const binEnd = i === numBins - 1 ? 20000 : binStart * 2;
+      return [Math.floor(binStart / binWidth), Math.floor(binEnd / binWidth)];
+    });
+
+    setBinInfo(binRanges);
+  }, [sampleRate, fftSize, numBins]);
+
   useFrame(() => {
     if (!audioLoaded) return;
+
+    // Calculate average strength of each bin
+    const strengths = binInfo.map((bin) => {
+      const strength = getFrequencyAverage(textureData.image.data, bin[0], bin[1]);
+      return strength;
+    });
+
+    // Calculate average strength of all bins
+    const totalStrengthAverage = getFrequencyAverage(
+      textureData.image.data,
+      binInfo[0][0],
+      binInfo[binInfo.length - 1][1],
+    );
+
+    strengths.push(totalStrengthAverage);
+    binStrengths.current = strengths;
 
     analyzer.current.getFrequencyData();
     textureData.needsUpdate = true;
   });
 
-  return { textureData, sampleRate };
+  return { textureData, binStrengths, sampleRate };
 };
 
 export default useFFTTexture;
