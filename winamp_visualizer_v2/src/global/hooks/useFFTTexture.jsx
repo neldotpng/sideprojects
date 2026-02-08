@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -19,7 +19,14 @@ const getFrequencyAverage = (data, start, end) => {
   return sum / len / 255;
 };
 
-const useFFTTexture = (song, fftSize = 1024, numBins = 8) => {
+const DEFAULT_OPTIONS = {
+  fftSize: 1024,
+  numBins: 8,
+};
+
+const useFFTTexture = (song, options = {}) => {
+  const { fftSize = DEFAULT_OPTIONS.fftSize, numBins = DEFAULT_OPTIONS.numBins } = options;
+
   // THREE AudioAnalyzer
   const analyzer = useRef(new THREE.AudioAnalyser(audio, fftSize));
 
@@ -34,6 +41,19 @@ const useFFTTexture = (song, fftSize = 1024, numBins = 8) => {
   // Stateful bass/mids/highs sampling range for averaging and passing uniforms
   const [binInfo, setBinInfo] = useState([]);
 
+  // Audio Player Controls
+  // Initialize the audio player
+  const initAudioPlayer = useCallback(() => {
+    if (!audioLoaded) return;
+    if (!audio.isPlaying) audio.play();
+  }, [audioLoaded]);
+
+  // Pause/Play the audio
+  const pausePlayAudio = () => {
+    if (audio.isPlaying) audio.pause();
+    else audio.play();
+  };
+
   // Hook to Load New Song
   useEffect(() => {
     // Set the sampleRate for the song, used for analysis
@@ -42,9 +62,10 @@ const useFFTTexture = (song, fftSize = 1024, numBins = 8) => {
     // Stop current audio when new audio is being loaded
     if (audio.isPlaying) audio.stop();
 
+    if (!song) return;
+
     loader.load(song, (buffer) => {
       audio.setBuffer(buffer);
-      if (!audio.isPlaying) audio.play();
 
       setAudioLoaded(true);
       setTextureData(new THREE.DataTexture(analyzer.current.data, fftSize / 2, 1, THREE.RedFormat));
@@ -55,7 +76,7 @@ const useFFTTexture = (song, fftSize = 1024, numBins = 8) => {
   useEffect(() => {
     const binWidth = sampleRate / (fftSize / 2);
 
-    let subBassHz = 20;
+    const subBassHz = 20;
     const binRanges = [...Array(numBins)].map((_, i) => {
       const binStart = subBassHz * Math.pow(2, i);
       const binEnd = i === numBins - 1 ? 20000 : binStart * 2;
@@ -88,7 +109,10 @@ const useFFTTexture = (song, fftSize = 1024, numBins = 8) => {
     textureData.needsUpdate = true;
   });
 
-  return { textureData, binStrengths, sampleRate };
+  return {
+    audioData: { textureData, binStrengths, sampleRate },
+    audioPlayer: { audioLoaded, initAudioPlayer, pausePlayAudio },
+  };
 };
 
 export default useFFTTexture;

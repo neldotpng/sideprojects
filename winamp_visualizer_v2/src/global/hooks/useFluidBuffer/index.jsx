@@ -1,6 +1,5 @@
 import { useFBO } from "@react-three/drei";
 import { LinearFilter, FloatType, RGBAFormat } from "three";
-import { useControls, folder } from "leva";
 
 import useAdvection from "./useAdvection";
 import useImpulse from "./useImpulse";
@@ -10,6 +9,10 @@ import useGradient from "./useGradient";
 import useVorticity from "./useVorticity";
 import useAddVorticity from "./useAddVorticity";
 import useColor from "./useColor";
+
+const c_size = 70;
+const c_force = 24;
+const dissipation = 1.5;
 
 const useFluidBuffer = ({
   resolution = 256,
@@ -26,32 +29,6 @@ const useFluidBuffer = ({
   audioData = {},
   pingPongTexture = null,
 } = {}) => {
-  const { c_size, c_force, dissipation } = useControls({
-    "Fluid Impulse": folder({
-      c_size: {
-        label: "Size",
-        value: 70,
-        min: 0,
-        max: 100,
-        step: 1,
-      },
-      c_force: {
-        label: "Strength",
-        value: 24,
-        min: 1,
-        max: 100,
-        step: 1,
-      },
-      dissipation: {
-        label: "Dissipation",
-        value: 1.5,
-        min: 0.1,
-        max: 10,
-        step: 0.01,
-      },
-    }),
-  });
-
   // Main FBOS
   const velocityA = useFBO(resolution, resolution, fboSettings);
   const velocityB = useFBO(resolution, resolution, fboSettings);

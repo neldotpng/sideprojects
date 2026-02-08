@@ -46,13 +46,6 @@ const PingPongScene = ({ audioData, segments = 2 }) => {
     uniforms: bufferUniforms,
   });
 
-  // // Shader Controls
-  // useShaderControls({
-  //   getMaterials: () => {
-  //     return { shaderMaterial: shaderMaterial.current, bufferMaterial: bufferMaterial };
-  //   },
-  // });
-
   // Scale Plane to Fullscreen
   useLayoutEffect(() => {
     plane.current.scale.x = viewport.width;

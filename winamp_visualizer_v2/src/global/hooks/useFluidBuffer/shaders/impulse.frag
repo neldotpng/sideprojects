@@ -4,16 +4,6 @@ uniform float uForce;
 uniform float uSize;
 uniform vec2 uResolution;
 uniform vec2 uCellScale;
-uniform vec4 uImpulse00;
-uniform vec4 uImpulse01;
-uniform vec4 uImpulse02;
-uniform vec4 uImpulse03;
-uniform vec4 uImpulse04;
-uniform vec4 uImpulse10;
-uniform vec4 uImpulse11;
-uniform vec4 uImpulse12;
-uniform vec4 uImpulse13;
-uniform vec4 uImpulse14;
 uniform float uAudioBin0;
 uniform float uAudioBin1;
 uniform float uAudioBin2;
@@ -65,87 +55,6 @@ void main() {
   impulse += getImpulse(uv, vec2(-0.66, 0.33), (uAudioBin6 + uAudioBin5) / 2.); // TL CORNER
   impulse += getImpulse(uv, vec2(0.66, 0.33), uAudioBin8); // TR CORNER
   impulse += getImpulse(uv, vec2(-0.66, -0.33), uAudioBin7); // BL CORNER
-
-
-  // THUMB1
-  dist = uv - uImpulse00.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse00.zw * uForce * falloff);
-
-  // INDEX1
-  dist = uv - uImpulse01.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse01.zw * uForce * falloff);
-
-  // MIDDLE1
-  dist = uv - uImpulse02.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse02.zw * uForce * falloff);
-
-  // RING1
-  dist = uv - uImpulse03.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse03.zw * uForce * falloff);
-
-  // PINKY1
-  dist = uv - uImpulse04.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse04.zw * uForce * falloff);
-
-  // THUMB2
-  dist = uv - uImpulse10.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse10.zw * uForce * falloff);
-
-  // INDEX2
-  dist = uv - uImpulse11.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse11.zw * uForce * falloff);
-
-  // MIDDLE2
-  dist = uv - uImpulse12.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse12.zw * uForce * falloff);
-
-  // RING2
-  dist = uv - uImpulse13.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse13.zw * uForce * falloff);
-
-  // PINKY2
-  dist = uv - uImpulse14.xy;
-  dist /= scale;
-
-  d = -dot(dist, dist);
-  falloff = exp(d);
-  impulse += vec2(uImpulse14.zw * uForce * falloff);
 
   gl_FragColor = vec4(velocity + impulse, 0., 1.);
   // gl_FragColor = vec4(vec3(falloff), 1.);
