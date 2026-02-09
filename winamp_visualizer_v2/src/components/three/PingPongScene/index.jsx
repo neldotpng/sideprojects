@@ -97,6 +97,7 @@ const PingPongScene = ({ audioData, segments = 2 }) => {
           uEnergy: { value: 0 },
           uNyquist: { value: audioData.sampleRate / 2 },
         }}
+        transparent
         ref={shaderMaterial}
       />
     </mesh>

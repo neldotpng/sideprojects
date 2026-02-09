@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { Color } from "three";
-import { useControls, folder, button, buttonGroup } from "leva";
+import { useControls, folder, button } from "leva";
 
 import Debug from "@/global/Debug";
 import Background from "../Background/Background";
@@ -52,7 +52,6 @@ const Scene = () => {
       "Play/Pause": button(() => audioPlayer.pausePlayAudio()),
     }),
   });
-
   // Init FFTTexture
   const { audioData, audioPlayer } = useFFTTexture(songUrl, { fftSize: 4096 });
 

@@ -22,12 +22,13 @@ void main() {
   vec3 color = vec3(0.);
   float time = uTime;
 
-  vec2 uv = vUv.xx * 9.;
-  vec2 id = floor(uv);
-  vec2 fr = fract(uv);
+  vec2 uv = vUv;
+  // uv = fract(uv * 2.);
+  vec4 texture = texture2D(uTexture, uv);
+  color = texture.rgb;
+  // color = vec3(uv, 0.);
 
-  vec3 texture = texture2D(uTexture, vUv).rgb;
-  color = texture;
+  // texture.a = 1.;
 
   // if (id.x == 8.) color = vec3(getLogBandEnergy(20., 20000.));
 
@@ -39,5 +40,5 @@ void main() {
   //   }
   // }
 
-  gl_FragColor = vec4(color, 1.);
+  gl_FragColor = vec4(color, texture.a);
 }
