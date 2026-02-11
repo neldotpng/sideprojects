@@ -116,8 +116,12 @@ const Scene = () => {
         fontWeight={700}
         textAlign="center"
         onClick={onClick}
-        onPointerEnter={() => setHovered(true)}
-        onPointerLeave={() => setHovered(false)}
+        onPointerEnter={() => {
+          !streamStarted && setHovered(true);
+        }}
+        onPointerLeave={() => {
+          !streamStarted && setHovered(false);
+        }}
         visible={audioPlayer.audioLoaded && !streamStarted}>
         start audio
       </Text>

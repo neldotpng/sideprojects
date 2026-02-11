@@ -1,5 +1,5 @@
-#define PI 3.1415926535897932384626433832795
-#define PI2 6.28318530718
+#define PI acos(-1.)
+#define TAU PI*2.
 
 // GENERALIZED FUNCTIONS
 vec2 random2(vec2 st){
@@ -70,44 +70,4 @@ vec2 clog( vec2 a ) {
 // COLOR PALETTE 
 vec3 palette( float t, vec3 a, vec3 b, vec3 c, vec3 d ) {
   return a + b*cos( PI*2. * (c*t + d) );
-}
-
-// RAYMARCHING
-// circular
-float smin( float a, float b, float k )
-{
-    k *= 1.0/(1.0-sqrt(0.5));
-    float h = max( k-abs(a-b), 0.0 )/k;
-    return min(a,b) - k*0.5*(1.0+h-sqrt(1.0-h*(h-2.0)));
-}
-float sdSphere( vec3 p, float s ) {
-  return length(p)-s;
-}
-vec3 opLimitedRepetition( in vec3 p, in float s, in vec3 lmin, in vec3 lmax ){
-  vec3 q = p - s*clamp(round(p/s),-lmin,lmax);
-  return q;
-}
-// a.x controls repetition expansion on x-y axes
-// a.y controls repetition on z-axis
-// a.z controls sphere size and strength of smooth min
-// a.w controls rotation speed
-float map(vec3 p, vec4 a) {
-  vec3 sp = vec3(0., 0., 5.);
-  sp = p - sp;
-
-  mat2 spr = rot2D(a.w);
-  sp.xz *= spr;
-  sp.yz *= spr;
-
-  vec3 r = opLimitedRepetition(
-    sp, 
-    3., 
-    vec3(a.x, a.x, a.y), 
-    vec3(a.x, a.x, a.y)
-  );
-
-  float s1 = sdSphere(sp, 2. * a.z);
-  float s2 = sdSphere(r, a.z);
-
-  return smin(s1, s2, a.z);
 }

@@ -40,10 +40,16 @@ varying vec2 vUv;
 vec3 pal(float _u) {
   return palette(
     pow(_u, 6.), 
-    vec3(0.7 , 0.6 , 0.5 ),
-    vec3(0.5 , 0.3 , 0.2 ),
-    vec3(1.0 , 1.0 , 1.0 ),
-    vec3(0.5 , 0.33 , 0.2 ) 
+    vec3(
+      0.7 + sin(uTime * 0.9) * 0.1 , 
+      0.6 + cos(uTime * 0.7) * 0.05 , 
+      0.5 + sin(uTime * 0.5) * 0.1 ),
+    vec3( 0.5 , 0.3 , 0.2 ),
+    vec3( 1.0 , 1.0 , 1.0 ),
+    vec3( 
+      0.5 + sin(uTime * 0.3) * 0.05 , 
+      0.33 + cos(uTime + 5. * 0.2) * 0.025, 
+      0.2 + cos(uTime * 0.2) * 0.05 ) 
   );
 }
 
@@ -54,7 +60,8 @@ void main() {
   float aspect = uResolution.x / uResolution.y;
   uv.y /= aspect;
 
-  // vec2 id = floor(uv * 27.);
+  uv += uTime * 0.1 +(u01 + u02 + u03 + u04) / 8.;
+  vec2 id = floor(uv * 12.);
 
   vec3 prev = texture2D(uTexture, vUv).rgb; // Last renders' values
 
@@ -62,46 +69,46 @@ void main() {
 
 
   
-  // if (mod(id.x, 9.) == 0. || mod(id.y, 9.) == 0.) {
-  //   color = pal((u00 + u01) / 2.);
-  //   alpha = (u00 + u01) / 2.;
-  // }
-  // if (mod(id.x, 9.) == 1. || mod(id.y, 9.) == 1.) {
-  //   color = pal(u01);
-  //   alpha = u01;
-  // }
-  // if (mod(id.x, 9.) == 2. || mod(id.y, 9.) == 2.) {
-  //   color = pal(u02);
-  //   alpha = u02;
-  // }
-  // if (mod(id.x, 9.) == 3. || mod(id.y, 9.) == 3.) {
-  //   color = pal(u03);
-  //   alpha = u03;
-  // }
-  // if (mod(id.x, 9.) == 4. || mod(id.y, 9.) == 4.) {
-  //   color = pal(u04);
-  //   alpha = u04;
-  // } 
-  // if (mod(id.x, 9.) == 5. || mod(id.y, 9.) == 5.) {
-  //   color = pal(u05);
-  //   alpha = u05;
-  // }
-  // if (mod(id.x, 9.) == 6. || mod(id.y, 9.) == 6.) {
-  //   color = pal(u06);
-  //   alpha = u06;
-  // }
-  // if (mod(id.x, 9.) == 7. || mod(id.y, 9.) == 7.) {
-  //   color = pal(u07);
-  //   alpha = u07;
-  // }
-  // if (mod(id.x, 9.) == 8. || mod(id.y, 9.) == 8.) {
-  //   color = pal(u08 * 1.5);
-  //   alpha = u08 * 1.5;
-  // }
+  if (mod(id.x, 9.) == 0. || mod(id.y, 9.) == 0.) {
+    color = pal((u00 + u01) / 2.);
+    alpha = (u00 + u01) / 2.;
+  }
+  if (mod(id.x, 9.) == 1. || mod(id.y, 9.) == 1.) {
+    color = pal(u01);
+    alpha = u01;
+  }
+  if (mod(id.x, 9.) == 2. || mod(id.y, 9.) == 2.) {
+    color = pal(u02);
+    alpha = u02;
+  }
+  if (mod(id.x, 9.) == 3. || mod(id.y, 9.) == 3.) {
+    color = pal(u03);
+    alpha = u03;
+  }
+  if (mod(id.x, 9.) == 4. || mod(id.y, 9.) == 4.) {
+    color = pal(u04);
+    alpha = u04;
+  } 
+  if (mod(id.x, 9.) == 5. || mod(id.y, 9.) == 5.) {
+    color = pal(u05);
+    alpha = u05;
+  }
+  if (mod(id.x, 9.) == 6. || mod(id.y, 9.) == 6.) {
+    color = pal(u06);
+    alpha = u06;
+  }
+  if (mod(id.x, 9.) == 7. || mod(id.y, 9.) == 7.) {
+    color = pal(u07);
+    alpha = u07;
+  }
+  if (mod(id.x, 9.) == 8. || mod(id.y, 9.) == 8.) {
+    color = pal(u08 * 1.5);
+    alpha = u08 * 1.;
+  }
 
 
   // color = abs(color.r - prev.r) > 0.25 ? color : mix(color, prev, 0.95);
-  // color = abs(color.r - prev.r) > 0.25 ? mix(color, prev, 0.05) : mix(color, prev, 0.8);
+  color = abs(color.r - prev.r) > 0.25 ? mix(color, prev, 0.05) : mix(color, prev, 0.5);
   // color.r = getLogBandEnergy(20., 150.);
   // color.g = getLogBandEnergy(150., 500.);
   // color.b = getLogBandEnergy(500., 2500.);
