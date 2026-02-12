@@ -74,12 +74,12 @@ const useFFTTexture = (song, options = {}) => {
 
   // Update the binInfo based on sampleRate and fftSize
   useEffect(() => {
-    const binWidth = sampleRate / (fftSize / 2);
+    const binWidth = sampleRate / 2 / (fftSize / 2);
 
     const subBassHz = 20;
     const binRanges = [...Array(numBins)].map((_, i) => {
       const binStart = subBassHz * Math.pow(2, i);
-      const binEnd = i === numBins - 1 ? 20000 : binStart * 2;
+      const binEnd = i === numBins - 1 ? sampleRate / 2 : binStart * 2;
       return [Math.floor(binStart / binWidth), Math.floor(binEnd / binWidth)];
     });
 
@@ -96,11 +96,7 @@ const useFFTTexture = (song, options = {}) => {
     });
 
     // Calculate average strength of all bins
-    const totalStrengthAverage = getFrequencyAverage(
-      textureData.image.data,
-      binInfo[0][0],
-      binInfo[binInfo.length - 1][1],
-    );
+    const totalStrengthAverage = analyzer.current.getAverageFrequency() / 255;
 
     strengths.push(totalStrengthAverage);
     binStrengths.current = strengths;
