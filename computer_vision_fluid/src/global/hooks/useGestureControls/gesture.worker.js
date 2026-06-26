@@ -1,10 +1,10 @@
-self.importScripts("./mediapipe/vision_bundle.js");
+self.importScripts("/mediapipe/vision_bundle.js");
 
 let landmarker;
 let _busy = false;
 const options = {
   baseOptions: {
-    modelAssetPath: "./mediapipe/gesture_recognizer.task",
+    modelAssetPath: "/mediapipe/gesture_recognizer.task",
     delegate: "GPU",
   },
   runningMode: "IMAGE",
@@ -15,7 +15,7 @@ const options = {
 // Load and create Image Recognition Task Model
 const createLandmarker = async () => {
   // _mediapipe const imported from importScript
-  const vision = await _mediapipe.FilesetResolver.forVisionTasks("./mediapipe/wasm");
+  const vision = await _mediapipe.FilesetResolver.forVisionTasks("/mediapipe/wasm");
 
   return _mediapipe.GestureRecognizer.createFromOptions(vision, options);
 };
