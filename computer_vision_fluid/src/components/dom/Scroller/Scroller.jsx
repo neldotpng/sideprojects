@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import Lenis from "lenis";
 
 import { debounce } from "@/global/hooks/useDebounce";
-import cx from "./scroller.module.scss";
+import cx from "./Scroller.module.scss";
 
 // Sections Prop is an array of numbers representing section heights in vh units
 const Scroller = ({ wrapperRef, lenisRef, sections = [100] }) => {
